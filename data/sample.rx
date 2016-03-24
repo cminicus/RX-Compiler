@@ -1,0 +1,42 @@
+// starting off with a comment
+
+let x = 4
+// this is a y!
+let y = 8 // this is another statement
+
+// middle comment
+
+if x < y {
+    // another comment
+    print(x)
+} else {
+    // yet another comment, damn
+    print(y)
+}
+
+// this is a while loop
+while x <= y {
+    // this prints the variable x
+    print(x)
+    x = x + 1
+    // comment for testing
+}
+
+// ending with a comment
+
+
+let four = y - x
+while y / x < 10 {
+    y = four + x
+    if x + four < y {
+        print(x)
+        print(y)
+    }
+    x = four - y
+}
+
+print(x)
+print(y)
+print(four)
+
+/* but dat new comment doe */

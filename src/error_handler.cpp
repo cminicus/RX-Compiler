@@ -1,0 +1,169 @@
+//
+//  error_handler.cpp
+//  RX Compiler
+//
+//  Created by Clayton Minicus on 3/3/16.
+//  Copyright © 2016 Clayton Minicus. All rights reserved.
+//
+
+#include <stdio.h>
+
+#include "error_handler.h"
+
+std::vector<std::string> ErrorHandler::error_messages;
+
+// --------------------------------- Errors ------------------------------------
+
+std::string ErrorHandler::unterimated_comment(bool flag, int line_number, int col_number) {
+    std::string s = UNTERMINATED_COMMENT(line_number, col_number);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::illegal_character(bool flag, char c, int line_number, int col_number) {
+    std::string ch(1, c);
+    std::string s = ILLEGAL_CHARACTER(ch, line_number, col_number);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::unexpected_token(bool flag, Token encountered, token_kind expected) {
+    
+    std::string kind;
+    std::string enc;
+    
+    if (encountered.kind == IDENTIFIER) {
+        kind = "identifier";
+        enc = encountered.identifier;
+    } else if (encountered.kind == INTEGER) {
+        kind = "integer";
+        enc = std::to_string(encountered.value);
+    } else {
+        kind = "token";
+        enc = Token::mapping[encountered.kind];
+    }
+    
+    std::string s;
+    
+    if (expected == IDENTIFIER) {
+        s = EXPECTED_IDENTIFIER(kind, enc, encountered.line_position, encountered.col_position);
+        
+    } else if (expected == INTEGER) {
+        s = EXPECTED_INTEGER(kind, enc, encountered.line_position, encountered.col_position);
+        
+    } else {
+        s = EXPECTED_TOKEN(kind, enc, Token::mapping[expected], encountered.line_position, encountered.col_position);
+    }
+ 
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::unexpected_token(bool flag, Token encountered, std::vector<token_kind> expected) {
+    std::string kind;
+    std::string enc;
+    
+    if (encountered.kind == IDENTIFIER) {
+        kind = "identifier";
+        enc = encountered.identifier;
+        
+    } else if (encountered.kind == INTEGER) {
+        kind = "integer";
+        enc = std::to_string(encountered.value);
+        
+    } else {
+        kind = "token";
+        enc = Token::mapping[encountered.kind];
+    }
+    
+    std::string matches;
+    for (int i = 0; i < (int) expected.size() - 1; i++) {
+        token_kind kind = expected[i];
+        if (kind == IDENTIFIER) {
+            matches += "an identifier, ";
+            
+        } else if (kind == INTEGER) {
+            matches += "an integer, ";
+            
+        } else {
+            matches += "'" + Token::mapping[kind] + "', ";
+        }
+    }
+    
+    token_kind k = expected[expected.size() - 1];
+    if (k == IDENTIFIER) {
+        matches += "or an identifier";
+        
+    } else if (k == INTEGER) {
+        matches += "or an integer";
+        
+    } else {
+        matches += "or '" + Token::mapping[k] + "'";
+    }
+
+    std::string s = EXPECTED_MULTIPLE(kind, enc, matches, encountered.line_position, encountered.col_position);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::expected_instruction(bool flag, Token encountered) {
+    std::string kind;
+    std::string enc;
+    
+    if (encountered.kind == IDENTIFIER) {
+        kind = "identifier";
+        enc = encountered.identifier;
+        
+    } else if (encountered.kind == INTEGER) {
+        kind = "integer";
+        enc = std::to_string(encountered.value);
+        
+    } else {
+        kind = "token";
+        enc = Token::mapping[encountered.kind];
+    }
+    
+    std::string s = EXPECTED_INSTRUCTION(kind, enc, encountered.line_position, encountered.col_position);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::duplicate_identifier(bool flag, Token encountered, Entry *e) {
+    std::string s = DUPLICATE_IDENTIFIER(encountered.identifier, encountered.line_position, encountered.col_position, e->line_position, e->col_position);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::undeclared_identifier(bool flag, Token encountered) {
+    std::string s = UNDECLARED_IDENTIFIER(encountered.identifier, encountered.line_position, encountered.col_position);
+    push_error(flag, s);
+    return s;
+}
+
+// -------------------------------- Utility ------------------------------------
+
+void ErrorHandler::push_error(bool flag, std::string error) {
+    error_messages.push_back(error);
+    if (flag) {
+        throw_errors();
+    }
+}
+
+void ErrorHandler::throw_errors() {
+    if (error_messages.empty()) {
+        return;
+    }
+    
+    for (auto it = error_messages.begin(); it != error_messages.end(); ++it) {
+        std::cerr << "error: " << *it << std::endl;
+    }
+    
+    int size = error_messages.size();
+    error_messages.clear();
+    
+    if (size == 1) {
+        throw std::runtime_error("ended with 1 error");
+    } else {
+        throw std::runtime_error("ended with " + std::to_string(size) + " errors");
+    }
+}
