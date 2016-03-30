@@ -18,6 +18,7 @@
 #include "number_node.h"
 #include "binary_node.h"
 #include "variable_node.h"
+#include "constant_node.h"
 
 class AST {
 public:
@@ -27,7 +28,7 @@ public:
     Node * get_root();
     
 private:
-    Node *root;
+    Node * root;
 };
 
 #endif /* ast_h */

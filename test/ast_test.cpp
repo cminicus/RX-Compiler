@@ -52,7 +52,7 @@ TEST_CASE("AST tree is properly built and destroyed") {
     
     // create if node
     IfNode *if_node = new IfNode;
-    if_node->condition = condition;
+    if_node->conditions.push_back(condition);
     
     WhileNode *while_node = new WhileNode;
     if_node->next = while_node;

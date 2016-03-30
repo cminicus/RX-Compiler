@@ -21,8 +21,9 @@ public:
     Scope();
     ~Scope();
     
-    void insert(std::string, Entry*);
-    Entry* find(std::string);
+    void insert(std::string, Entry *);
+    Entry * find(std::string);
+    std::string find_name(Entry *);
     bool local(std::string);
     void add_innner_scope(Scope *);
     

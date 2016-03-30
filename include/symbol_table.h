@@ -22,8 +22,9 @@ public:
     void create_scope();
     void close_scope();
     
-    void insert(std::string, Entry*);
-    Entry* find(std::string);
+    void insert(std::string, Entry *);
+    Entry * find(std::string);
+    std::string find_name(Entry *);
     bool local(std::string);
     
 private:

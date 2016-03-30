@@ -14,6 +14,7 @@ std::vector<std::string> ErrorHandler::error_messages;
 
 // --------------------------------- Errors ------------------------------------
 
+// Scanner
 std::string ErrorHandler::unterimated_comment(bool flag, int line_number, int col_number) {
     std::string s = UNTERMINATED_COMMENT(line_number, col_number);
     push_error(flag, s);
@@ -27,6 +28,7 @@ std::string ErrorHandler::illegal_character(bool flag, char c, int line_number, 
     return s;
 }
 
+// Parser
 std::string ErrorHandler::unexpected_token(bool flag, Token encountered, token_kind expected) {
     
     std::string kind;
@@ -128,6 +130,7 @@ std::string ErrorHandler::expected_instruction(bool flag, Token encountered) {
     return s;
 }
 
+// Symbol Table
 std::string ErrorHandler::duplicate_identifier(bool flag, Token encountered, Entry *e) {
     std::string s = DUPLICATE_IDENTIFIER(encountered.identifier, encountered.line_position, encountered.col_position, e->line_position, e->col_position);
     push_error(flag, s);
@@ -140,6 +143,33 @@ std::string ErrorHandler::undeclared_identifier(bool flag, Token encountered) {
     return s;
 }
 
+// AST
+std::string ErrorHandler::non_variable_assignment(bool flag, Token token) {
+    std::string s = NON_VARIABLE_ASSIGNMENT(token.identifier, token.line_position, token.col_position);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::illegal_operation_for_type(bool flag, Token token, Type * type) {
+    // TODO: - Eventually use type
+    std::string s = ILLEGAL_OPERATION_FOR_TYPE(Token::mapping[token.kind], "", token.line_position, token.col_position);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::operation_type_mismatch(bool flag, Token token, Type * type1, Type * type2) {
+    // TODO: - Eventually use types
+    std::string s = OPERATION_TYPE_MISMATCH(Token::mapping[token.kind], "", "", token.line_position, token.col_position);
+    push_error(flag, s);
+    return s;
+}
+
+std::string ErrorHandler::incompatible_assignment(bool flag, Token token, Type * type) {
+    // TODO: - Eventually use type
+    std::string s = INCOMPATIBLE_ASSIGNMENT(token.identifier, "", token.line_position, token.col_position);
+    push_error(flag, s);
+    return s;
+}
 // -------------------------------- Utility ------------------------------------
 
 void ErrorHandler::push_error(bool flag, std::string error) {

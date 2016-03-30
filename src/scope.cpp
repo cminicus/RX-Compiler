@@ -36,19 +36,34 @@ Scope::~Scope() {
     inner_scopes.clear();
 }
 
-void Scope::insert(std::string name, Entry *value) {
+void Scope::insert(std::string name, Entry * value) {
     std::pair<std::string, Entry *> p(name, value);
     entries.insert(p);
 }
 
-Entry* Scope::find(std::string name) {
-    Scope *s = this;
+Entry * Scope::find(std::string name) {
+    Scope * s = this;
     std::map<std::string, Entry *>::iterator it;
     
     while (s != nullptr) {
         it = s->entries.find(name);
         if (it != s->entries.end()) {
             return it->second;
+        }
+        s = s->outer;
+    }
+    return nullptr;
+}
+
+std::string Scope::find_name(Entry * entry) {
+    Scope * s = this;
+    std::map<std::string, Entry *>::iterator it;
+    
+    while (s != nullptr) {
+        for (auto it = s->entries.begin(); it != s->entries.end(); ++it) {
+            if (it->second == entry) {
+                return it->first;
+            }
         }
         s = s->outer;
     }

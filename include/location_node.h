@@ -12,7 +12,8 @@
 #include "expression_node.h"
 
 enum location_kind {
-    VARIABLE_LOCATION
+    VARIABLE_LOCATION,
+    CONSTANT_LOCATION
 };
 
 class LocationNode: public ExpressionNode {

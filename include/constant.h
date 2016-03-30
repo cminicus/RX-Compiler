@@ -17,8 +17,8 @@ public:
     ~Constant();
     entry_kind get_entry_kind() { return CONSTANT_ENTRY; };
     
-    int value; // make this const?
-    Type *type;
+    int value = 0; // make this const?
+    Type *type = nullptr;
 };
 
 #endif /* constant_h */

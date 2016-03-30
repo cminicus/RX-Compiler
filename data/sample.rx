@@ -1,6 +1,6 @@
 // starting off with a comment
 
-let x = 4
+var x = 4
 // this is a y!
 let y = 8 // this is another statement
 
@@ -26,13 +26,14 @@ while x <= y {
 
 
 let four = y - x
+
 while y / x < 10 {
-    y = four + x
-    if x + four < y {
+    var z = four + x
+    if x + four < z {
         print(x)
-        print(y)
+        print(z)
     }
-    x = four - y
+    x = four - z
 }
 
 print(x)

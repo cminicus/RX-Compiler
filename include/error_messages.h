@@ -36,4 +36,12 @@ using std::to_string;
 #define UNDECLARED_IDENTIFIER(id, line, col) "undeclared identifier '" + id + "' at " + to_string(line) + ":" + to_string(col)
 
 
+#define NON_VARIABLE_ASSIGNMENT(id, line, col) "cannot assign to non-variable identifier '" + id + "' at " + to_string(line) + ":" + to_string(col)
+
+#define ILLEGAL_OPERATION_FOR_TYPE(op, type, line, col) "cannot apply operation '" + op + "' at " + to_string(line) + ":" + to_string(col) + " with expressions of type '" + type + "'"
+
+#define OPERATION_TYPE_MISMATCH(op, type1, type2, line, col) "cannot apply operation '" + op + "' at " + to_string(line) + ":" + to_string(col) + " with expressions of type '" + type1 + "' and '" + type2 + "'"
+
+#define INCOMPATIBLE_ASSIGNMENT(id, type, line, col) "cannot assign to variable '" + id + "' at " + to_string(line) + ":" + to_string(col) + " with incompatible type '" + type + "'"
+
 #endif /* error_messages_h */

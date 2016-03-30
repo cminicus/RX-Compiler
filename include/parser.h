@@ -56,7 +56,7 @@ private:
     // Symbol Table Functions
     void create_scope();
     void close_scope();
-    void insert(std::string, Entry*);
+    void insert(std::string, Entry *);
     Entry * find(std::string);
     bool local(std::string);
     
@@ -64,18 +64,18 @@ private:
     void set_ast_root(Node *);
     
     // Entry Functions
-    void create_variable_entry(token_match);
-    void create_constant_entry(token_match);
+    Variable * create_variable_entry(token_match);
+    Constant * create_constant_entry(token_match);
     
     // Grammar Functions
     void Statements();
     
-    void Declaration();
-    void VariableDeclaration();
-    void ConstantDeclaration();
+    DeclarationNode * Declaration();
+    DeclarationNode * VariableDeclaration();
+    DeclarationNode * ConstantDeclaration();
     
     ExpressionNode * Expression();
-    void Term();
+    ExpressionNode * Term();
     ExpressionNode * Factor();
     
     InstructionNode * Instructions();

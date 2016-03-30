@@ -17,8 +17,8 @@ public:
     ~Variable();
     entry_kind get_entry_kind() { return VARIABLE_ENTRY; };
     
-    int value;
-    Type *type;
+    int value = 0;
+    Type *type = nullptr;
 };
 
 

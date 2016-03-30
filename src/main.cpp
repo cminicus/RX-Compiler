@@ -16,7 +16,7 @@ using std::endl;
 using std::cerr;
 
 // ------------------------- Function Declarations -----------------------------
-std::string handle_arguments(int, const char *[]);
+std::string handle_arguments(int, const char * []);
 void compile(std::string);
 
 // ------------------------------ Functions ------------------------------------
@@ -26,7 +26,7 @@ int main(int argc, const char * argv[]) {
         string filename = handle_arguments(argc, argv);
         compile(filename);
         
-    } catch (std::runtime_error &error) {
+    } catch (std::runtime_error & error) {
         cerr << error.what() << endl;
         return EXIT_FAILURE;
     }
@@ -42,6 +42,7 @@ std::string handle_arguments(int argc, const char * argv[]) {
 }
 
 void compile(std::string filename) {
+    // make this AST soon
     RXCompiler compiler(PARSE_WITH_SYMBOLS);
     compiler.set_filename(filename);
     compiler.compile();

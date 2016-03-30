@@ -10,16 +10,24 @@
 #define if_node_h
 
 #include "instruction_node.h"
+#include <vector>
 
 class IfNode: public InstructionNode {
 public:
-    IfNode() : condition(nullptr), true_instructions(nullptr), false_instructions(nullptr) {}
-    ~IfNode() { delete condition; delete true_instructions; delete false_instructions; }
+    IfNode() {}
+    ~IfNode() {
+        for (auto it = conditions.begin(); it != conditions.end(); ++it) {
+            delete (*it);
+        }
+        
+        for (auto it = instructions.begin(); it != instructions.end(); ++it) {
+            delete (*it);
+        }
+    }
     instruction_kind get_instruction_kind() { return IF_INSTRUCTION; }
     
-    ConditionNode *condition;
-    InstructionNode *true_instructions;
-    InstructionNode *false_instructions;
+    std::vector<ConditionNode *> conditions;
+    std::vector<InstructionNode *> instructions;
 };
 
 #endif /* if_node_h */

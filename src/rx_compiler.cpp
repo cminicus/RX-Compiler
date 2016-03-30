@@ -43,6 +43,7 @@ void RXCompiler::compile() {
             
             Parser parser(scanner, &symbol_table);
             parser.parse();
+            break;
         }
         case PARSE_WITH_AST: {
             Scanner scanner(source);
@@ -51,6 +52,7 @@ void RXCompiler::compile() {
             
             Parser parser(scanner, &symbol_table, &ast);
             parser.parse();
+            break;
         }
     }
 }

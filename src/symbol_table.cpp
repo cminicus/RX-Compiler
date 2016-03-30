@@ -40,8 +40,12 @@ void SymbolTable::insert(std::string name, Entry *entry) {
     current_scope->insert(name, entry);
 }
 
-Entry* SymbolTable::find(std::string name) {
+Entry * SymbolTable::find(std::string name) {
     return current_scope->find(name);
+}
+
+std::string SymbolTable::find_name(Entry * entry) {
+    return current_scope->find_name(entry);
 }
 
 bool SymbolTable::local(std::string name) {

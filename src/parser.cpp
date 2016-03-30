@@ -86,6 +86,7 @@ void Parser::next() {
  *  @return the encountered token, or a null token if not matched
  */
 token_match Parser::match(token_kind match) {
+    
     if (current.kind == match) {
         next();
         return {last, true};
@@ -206,7 +207,7 @@ void Parser::insert(std::string name, Entry *entry) {
  *
  *  @return the entry if found, nullptr otherwise
  */
-Entry* Parser::find(std::string name) {
+Entry * Parser::find(std::string name) {
     if (symbol_table != nullptr) {
         return symbol_table->find(name);
     }
@@ -248,52 +249,65 @@ void Parser::set_ast_root(Node *root) {
  *  Creates a variable entry for the symbol table
  *
  *  @param match the token_match struct
+ *  @param type the variable type
+ *
+ *  @return a variable node, or nullptr if it's a duplicate
  */
-void Parser::create_variable_entry(token_match match) {
+Variable * Parser::create_variable_entry(token_match match) {
     if (match.is_valid && !no_symbols) {
         Token t = match.token;
+        
         // other things with local??
         if (local(t.identifier)) {
-            // error
+            
             // duplicate declaration
-            Entry *e = find(t.identifier);
-            // pass in entry and get e->line_pos and e->col_pos
+            Entry * e = find(t.identifier);
             ErrorHandler::duplicate_identifier(false, t, e);
+            
         } else {
-            Variable *v = new Variable;
-            v->value = 5;
-            v->type = Integer::Instance();
+            
+            Variable * v = new Variable;
             v->line_position = t.line_position;
             v->col_position = t.col_position;
             
             insert(t.identifier, v);
+            
+            return v;
         }
     }
+    return nullptr;
 }
 
 /**
  *  Creates a constant entry for the symbol table
  *
  *  @param match the token_match struct
+ *  @param type the variable type
+ *
+ *  @return a constant node, or nullptr if it's a duplicate
  */
-void Parser::create_constant_entry(token_match match) {
+Constant * Parser::create_constant_entry(token_match match) {
     if (match.is_valid && !no_symbols) {
         Token t = match.token;
+        
         if (local(t.identifier)) {
-            // error
+            
             // duplicate declaration
-            Entry *e = find(t.identifier);
+            Entry * e = find(t.identifier);
             ErrorHandler::duplicate_identifier(false, t, e);
+            
         } else {
-            Constant *c = new Constant;
-            c->value = 5;
-            c->type = Integer::Instance();
+            
+            Constant * c = new Constant;
             c->line_position = t.line_position;
             c->col_position = t.col_position;
             
             insert(t.identifier, c);
+            
+            return c;
         }
     }
+    return nullptr;
 }
 
 #pragma mark - Grammar
@@ -303,29 +317,27 @@ void Parser::create_constant_entry(token_match match) {
  *  Statements = {Instructions}
  */
 void Parser::Statements() {
+    
     InstructionNode * root = nullptr;
     InstructionNode * current_node = nullptr;
-    InstructionNode * next_node = nullptr;
+    
     while (current.kind != END_OF_FILE) {
         
         // first thing has to be an instruction or the file is empty
         if (!check(this->instructions)) {
+            
             // if we miss an instruction, sync until we do
             ErrorHandler::expected_instruction(false, current);
             sync(this->instructions);
         }
         
-//        if (root == nullptr) {
-//            root = Instructions();
-//            current_node = root;
-//        } else {
-//            next_node = Instructions();
-//            current_node->next = next_node;
-//            current_node = next_node; // is this right?
-//        }
-        
-        /* root->next = Instructions(); */
-        Instructions();
+        if (root == nullptr) {
+            root = Instructions();
+            current_node = root;
+        } else {
+            current_node->next = Instructions();
+            current_node = current_node->next;
+        }
     }
     
     // set root node for the ast
@@ -338,116 +350,272 @@ void Parser::Statements() {
 /**
  *  Declaration = VariableDeclaration | ConstantDeclaration
  */
-void Parser::Declaration() {
+DeclarationNode * Parser::Declaration() {
     // right now you can correctly declare a variable called "int"
     // have a list of types potentially in the symbol_table and always
     // check against that in any declaration (even if not local)
+    
+    DeclarationNode * node = nullptr;
+    
     if (check({VAR})) {
-        VariableDeclaration();
+        node = VariableDeclaration();
         
     } else if (check({LET})) {
-        ConstantDeclaration();
+        node = ConstantDeclaration();
     }
+    
+    return node;
 }
 
 
 /**
  *  VariableDeclaration = "var" identifier "=" Expression
  */
-void Parser::VariableDeclaration() {
+DeclarationNode * Parser::VariableDeclaration() {
     match(VAR);
     token_match m = match(IDENTIFIER);
     match(ASSIGN);
-    Expression();
+    ExpressionNode * e = Expression();
     
-    create_variable_entry(m);
-}
-
-/**
- *  ConstantDeclaration = "let" identifier "=" Expression
- */
-void Parser::ConstantDeclaration() {
-    match(LET);
-    token_match m = match(IDENTIFIER);
-    match(ASSIGN);
-    Expression();
+    Variable * v = create_variable_entry(m);
     
-    create_constant_entry(m);
-}
-
-/**
- *  Expression = [“+” | “-“] Term {(“+” | “-“) Term}
- */
-ExpressionNode * Parser::Expression() {
-    // probably isn't right
-    optional_match({PLUS, MINUS});
-    
-    Term();
-    
-    while (optional_match({PLUS, MINUS})) {
-        Term();
+    if (!no_ast && v != nullptr) {
+        v->type = e->type;
+        
+        VariableNode * node = new VariableNode;
+        node->variable = v;
+        node->type = v->type;
+        
+        DeclarationNode * declaration = new DeclarationNode;
+        declaration->location = node;
+        declaration->expression = e;
+        
+        return declaration;
     }
     
     return nullptr;
 }
 
 /**
+ *  ConstantDeclaration = "let" identifier "=" Expression
+ */
+DeclarationNode * Parser::ConstantDeclaration() {
+    match(LET);
+    token_match m = match(IDENTIFIER);
+    match(ASSIGN);
+    ExpressionNode * e = Expression();
+    
+    Constant *c = create_constant_entry(m);
+    
+    if (!no_ast && c != nullptr) {
+        c->type = e->type;
+        
+        ConstantNode * node = new ConstantNode;
+        node->constant = c;
+        node->type = c->type;
+        
+        DeclarationNode * declaration = new DeclarationNode;
+        declaration->location = node;
+        declaration->expression = e;
+        
+        return declaration;
+    }
+    
+    return nullptr;
+}
+
+/**
+ *  Expression = [“+” | “-“] Term {(“+” | “-“) Term}
+ */
+ExpressionNode * Parser::Expression() {
+    // not that there is currently no numeric collapsing in the expression
+    
+    // probably isn't right
+    optional_match({PLUS, MINUS});
+    
+    Token operation_token = last;
+    bool negate = operation_token.kind == MINUS;
+    
+    ExpressionNode * root = Term();
+    
+    bool illegal_type = !no_ast && root->type->get_type_kind() != INTEGER_TYPE;
+
+    // negate the first term
+    if (!no_ast && negate) {
+        Constant * c = new Constant;
+        c->value = 0;
+        c->type = Integer::Instance();
+        c->line_position = -1;
+        c->col_position = -1;
+        
+        NumberNode * zero = new NumberNode;
+        zero->constant = c;
+        zero->type = c->type;
+        
+        BinaryNode * b = new BinaryNode;
+        b->operation = last.kind;
+        b->left = zero;
+        b->right = root;
+        b->type = root->type;
+        
+        root = b;
+    }
+    
+    while (optional_match({PLUS, MINUS})) {
+        Token operation_token = last;
+        
+        if (illegal_type) {
+            ErrorHandler::illegal_operation_for_type(false, operation_token, root->type);
+            illegal_type = false;
+        }
+        
+        ExpressionNode * term = Term();
+        
+        if (!no_ast) {
+            if (term->type->get_type_kind() != INTEGER_TYPE) {
+                ErrorHandler::illegal_operation_for_type(false, operation_token, term->type);
+            }
+            
+            if (term->type != root->type) {
+                ErrorHandler::operation_type_mismatch(false, operation_token, term->type, root->type);
+            }
+            
+            BinaryNode * b = new BinaryNode;
+            b->operation = operation_token.kind;
+            b->left = term;
+            b->right = root;
+            b->type = term->type;
+            
+            root = b;
+        }
+    }
+    
+    return root;
+}
+
+/**
  *  Term = Factor {(“*” | “/“ | “%”) Factor}
  */
-void Parser::Term() {
-    Factor();
+ExpressionNode * Parser::Term() {
+    
+    ExpressionNode * root = Factor();
+    
+    // we flag an error but don't know the specific operation yet
+    bool illegal_type = !no_ast && root->type->get_type_kind() != INTEGER_TYPE;
+    
     while (optional_match({MULTIPLY, DIVIDE, MODULO})) {
-        Factor();
+        Token operation_token = last;
+        
+        if (illegal_type) {
+            ErrorHandler::illegal_operation_for_type(false, operation_token, root->type);
+            illegal_type = false;
+        }
+        
+        ExpressionNode * factor = Factor();
+        
+        if (!no_ast) {
+            if (factor->type->get_type_kind() != INTEGER_TYPE) {
+                ErrorHandler::illegal_operation_for_type(false, operation_token, factor->type);
+            }
+            
+            if (factor->type != root->type) {
+                ErrorHandler::operation_type_mismatch(false, operation_token, factor->type, root->type);
+            }
+            
+            BinaryNode * b = new BinaryNode;
+            b->operation = operation_token.kind;
+            b->left = root;
+            b->right = factor;
+            b->type = factor->type;
+            
+            root = b;
+        }
     }
+
+    return root;
 }
 
 /**
  *  Factor = integer | identifier | “(“ Expression “)”
  */
 ExpressionNode * Parser::Factor() {
+    
     if (check({INTEGER})) {
+        
         token_match m = match(INTEGER);
         
-        NumberNode * number_node = new NumberNode;
+        // leave if no ast
+        if (no_ast) {
+            return nullptr;
+        }
+        
         Constant * c = new Constant;
         c->type = Integer::Instance();
         c->value = m.token.value;
+        c->line_position = m.token.line_position;
+        c->col_position = m.token.col_position;
+        
+        NumberNode * number_node = new NumberNode;
         number_node->constant = c;
+        number_node->type = c->type;
         
         return number_node;
         
     } else if (check({IDENTIFIER})) {
+        
         token_match m = match(IDENTIFIER);
         
         if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
             ErrorHandler::undeclared_identifier(false, m.token);
         }
         
-        // do the whole variable thing here
-        Entry * e = find(m.token.identifier);
-        if (e == nullptr) {
-            // TODO: throw error, cannot assign to non variable type
+        // leave if no ast
+        if (no_ast) {
+            return nullptr;
         }
         
-        // cast entry to a variable and make a variable_node
-        // this could also be a constant here! constant_node?
-        Variable * variable = dynamic_cast<Variable *>(e);
-        VariableNode * variable_node = new VariableNode;
+        // find the entry
+        Entry * e = find(m.token.identifier);
         
-        // attach variable to variable node
-        variable_node->variable = variable;
-        return variable_node;
+        if (e != nullptr && e->get_entry_kind() == VARIABLE_ENTRY) {
+            
+            Variable * variable = dynamic_cast<Variable *>(e);
+            VariableNode * variable_node = new VariableNode;
+            
+            // attach variable to variable node
+            variable_node->variable = variable;
+            variable_node->type = variable->type;
+            
+            return variable_node;
+            
+        } else if (e != nullptr && e->get_entry_kind() == CONSTANT_ENTRY) {
+            
+            Constant * constant = dynamic_cast<Constant *>(e);
+            ConstantNode * constant_node = new ConstantNode;
+            
+            // attach variable to variable node
+            constant_node->constant = constant;
+            constant_node->type = constant->type;
+            
+            return constant_node;
+        }
+        
+        return nullptr;
         
     } else if (check({OPEN_PAREN})) {
+        
         match(OPEN_PAREN);
-        Expression();
+        ExpressionNode * e = Expression();
         match(CLOSE_PAREN);
+        
+        return e;
         
     } else {
         // this will throw the incorrect match error for us
         // probably not the best error though
         match({INTEGER, IDENTIFIER, OPEN_PAREN});
     }
+    
     return nullptr;
 }
 
@@ -455,23 +623,19 @@ ExpressionNode * Parser::Factor() {
  *  Instructions = Instruction {{“;” | “\\n”} Instruction}
  */
 InstructionNode * Parser::Instructions() {
-    // have to make these points unique every loop -> new pointer?
+    
     InstructionNode * instructions = nullptr;
-    InstructionNode * current = nullptr;
-    InstructionNode * next = nullptr;
+    InstructionNode * current_instruction = nullptr;
     
     while (check(this->instructions)) {
         
-//        if (instructions == nullptr) {
-//            instructions = Instruction();
-//            current = instructions;
-//        } else {
-//            next = Instruction();
-//            current->next = next;
-//            current = next;
-//        }
-        
-        Instruction();
+        if (instructions == nullptr) {
+            instructions = Instruction();
+            current_instruction = instructions;
+        } else {
+            current_instruction->next = Instructions();
+            current_instruction = current_instruction->next;
+        }
         
         // ending file, or end of body is a reason to leave
         if (check({END_OF_FILE, CLOSE_CURLY})) {
@@ -492,22 +656,30 @@ InstructionNode * Parser::Instructions() {
  *  Instruction = If | While | Assign | Print | Declaration
  */
 InstructionNode * Parser::Instruction() {
+    
     InstructionNode * instruction_node = nullptr;
+    
     if (check({IF})) {
         instruction_node = If();
+        
     } else if (check({WHILE})) {
         instruction_node = While();
+        
     } else if (check({IDENTIFIER})) {
         instruction_node = Assign();
+        
     } else if (check({PRINT})) {
         instruction_node = Print();
+        
     } else if (check({VAR, LET})) {
-        /*instruction_node = */Declaration();
+        instruction_node = Declaration();
+        
     } else {
         // this is handled outside of here
         ErrorHandler::expected_instruction(false, current);
         sync(this->instructions);
     }
+    
     return instruction_node;
 }
 
@@ -519,17 +691,18 @@ IfNode * Parser::If() {
     IfNode * if_node = new IfNode;
     
     match(IF);
-    if_node->condition = Condition();
+    
+    ConditionNode * c = Condition();
+    if_node->conditions.push_back(c);
     
     match(OPEN_CURLY);
     optional_match({NEW_LINE});
+    
     // create new scope for if statement
     create_scope();
     
-    // have a vector of instructions for the if?
-    // like not true, false
-    // inst_1, inst_2, inst_3 etc...
-    if_node->true_instructions = Instructions();
+    InstructionNode * i = Instructions();
+    if_node->instructions.push_back(i);
     
     optional_match({NEW_LINE});
     match(CLOSE_CURLY);
@@ -539,19 +712,22 @@ IfNode * Parser::If() {
     
 elseif:
     // else or else if clause
-    if (check({ELSE})) {
-        match(ELSE);
+    if (optional_match({ELSE})) {
         
         // else if clause
         if (optional_match({IF})) {
-            Condition();
+            
+            ConditionNode * c = Condition();
+            if_node->conditions.push_back(c);
             
             match(OPEN_CURLY);
             optional_match({NEW_LINE});
+            
             // create new scope for else if statement
             create_scope();
             
-            Instructions();
+            InstructionNode * i = Instructions();
+            if_node->instructions.push_back(i);
             
             optional_match({NEW_LINE});
             match(CLOSE_CURLY);
@@ -565,10 +741,12 @@ elseif:
         } else {
             match(OPEN_CURLY);
             optional_match({NEW_LINE});
+            
             // create new scope for else statement
             create_scope();
             
-            Instructions();
+            InstructionNode * i = Instructions();
+            if_node->instructions.push_back(i);
             
             optional_match({NEW_LINE});
             match(CLOSE_CURLY);
@@ -577,6 +755,12 @@ elseif:
             close_scope();
         }
     }
+    
+    if (no_ast) {
+        delete if_node;
+        return nullptr;
+    }
+    
     return if_node;
 }
 
@@ -591,6 +775,7 @@ WhileNode * Parser::While() {
     
     match(OPEN_CURLY);
     optional_match({NEW_LINE});
+    
     // create new scope for while statement
     create_scope();
     
@@ -601,6 +786,12 @@ WhileNode * Parser::While() {
     
     // end scope for while statement
     close_scope();
+    
+    if (no_ast) {
+        delete while_node;
+        return nullptr;
+    }
+    
     return while_node;
 }
 
@@ -608,26 +799,40 @@ WhileNode * Parser::While() {
  *  Assign = identifier “=“ Expression
  */
 AssignNode * Parser::Assign() {
-    AssignNode * assign_node = new AssignNode;
     
     token_match m = match(IDENTIFIER);
     match(ASSIGN);
-    assign_node->expression = Expression();
+    ExpressionNode * expression = Expression();
     
     if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
-        // error
-        // use of undeclared identifier
         ErrorHandler::undeclared_identifier(false, m.token);
+        // maybe return here
     }
     
     Entry * e = find(m.token.identifier);
-    if (e == nullptr || e->get_entry_kind() != VARIABLE_ENTRY) {
-        // TODO: throw error, cannot assign to non variable type
+    
+    // leave if not using ast
+    if (no_ast) {
+        return nullptr;
     }
+    
+    if (e == nullptr || e->get_entry_kind() != VARIABLE_ENTRY) {
+        ErrorHandler::non_variable_assignment(false, m.token);
+        return nullptr;
+    }
+    
+    AssignNode * assign_node = new AssignNode;
+    assign_node->expression = expression;
     
     // cast entry to a variable and make a variable_node
     Variable * variable = dynamic_cast<Variable *>(e);
     VariableNode * variable_node = new VariableNode;
+    variable_node->type = variable->type;
+    
+    // make sure types match
+    if (variable_node->type != assign_node->expression->type) {
+        ErrorHandler::incompatible_assignment(false, m.token, assign_node->expression->type);
+    }
     
     // attach variable to variable node
     variable_node->variable = variable;
@@ -642,46 +847,70 @@ AssignNode * Parser::Assign() {
  *  Print = “print” “(“ identifier “)”
  */
 PrintNode * Parser::Print() {
-    PrintNode * print_node = new PrintNode;
+    
     match(PRINT);
     match(OPEN_PAREN);
     token_match m = match(IDENTIFIER);
     match(CLOSE_PAREN);
     
     if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
-        // error
-        // use of undeclared identifier
         ErrorHandler::undeclared_identifier(false, m.token);
     }
     
-    Entry * e = find(m.token.identifier);
-    if (e == nullptr) {
-        // you can actually print nullptr here most likely? idk
-        // TODO: throw error, cannot assign to non variable type
+    if (no_ast) {
+        return nullptr;
     }
     
-    // TODO: - factor this out into a function (create_variable(m.token))
-    // cast entry to a variable and make a variable_node
-    Variable * variable = dynamic_cast<Variable *>(e);
-    VariableNode * variable_node = new VariableNode;
+    Entry * e = find(m.token.identifier);
     
-    // attach variable to variable node
-    variable_node->variable = variable;
+    if (e != nullptr && e->get_entry_kind() == VARIABLE_ENTRY) {
+        
+        PrintNode * print_node = new PrintNode;
+        
+        // cast entry to a variable and make a variable_node
+        Variable * variable = dynamic_cast<Variable *>(e);
+        VariableNode * variable_node = new VariableNode;
+        variable_node->type = variable->type;
+        
+        // attach variable to variable node
+        variable_node->variable = variable;
+        
+        // attach variable_node to assgin_node
+        print_node->location = variable_node;
+        
+        return print_node;
+        
+    } else if (e != nullptr && e->get_entry_kind() == CONSTANT_ENTRY) {
+        
+        PrintNode * print_node = new PrintNode;
+        
+        // cast entry to a variable and make a variable_node
+        Constant * constant = dynamic_cast<Constant *>(e);
+        ConstantNode * constant_node = new ConstantNode;
+        constant_node->type = constant->type;
+        
+        // attach variable to variable node
+        constant_node->constant = constant;
+        
+        // attach variable_node to assgin_node
+        print_node->location = constant_node;
+        
+        return print_node;
+    }
     
-    // attach variable_node to assgin_node
-    print_node->location = variable_node;
-    
-    return print_node;
+    return nullptr;
 }
 
 /**
  *  Condition = Expression (“==“ | “!=“ | “<“ | “<=“ | “>” | “>=“) Expression
  */
 ConditionNode * Parser::Condition() {
+    
     ConditionNode *condition = new ConditionNode;
     condition->left = Expression();
     // maybe change into checks and if not, send a custom error "missing condition"
     condition->operation = match(this->conditions).token.kind;
     condition->right = Expression();
+    
     return condition;
 }

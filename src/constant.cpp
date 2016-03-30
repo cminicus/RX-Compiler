@@ -10,7 +10,7 @@
 #include "constant.h"
 
 Constant::~Constant() {
-    if (type->get_type_kind() != INTEGER_TYPE) {
+    if (type != nullptr && type->get_type_kind() != INTEGER_TYPE) {
         delete type;
     }
 }

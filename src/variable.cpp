@@ -10,7 +10,7 @@
 #include "variable.h"
 
 Variable::~Variable() {
-    if (type->get_type_kind() != INTEGER_TYPE) {
+    if (type != nullptr && type->get_type_kind() != INTEGER_TYPE) {
         delete type;
     }
 }

@@ -21,6 +21,6 @@ void AST::set_root(Node *root) {
     this->root = root;
 }
 
-Node* AST::get_root() {
+Node * AST::get_root() {
     return this->root;
 }
