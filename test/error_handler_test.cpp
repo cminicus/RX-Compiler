@@ -10,6 +10,7 @@
 
 #include "catch.hpp"
 #include "error_handler.h"
+#include "variable.h" // symbol table?
 
 void test_helper(int errors) {
     std::string string;
@@ -32,6 +33,8 @@ void test_helper(int errors) {
 TEST_CASE("error_handler properly handles errors", "[error_handler]") {
     std::string error;
     
+    // ------------------------------ Scanner ----------------------------------
+    
     SECTION("unterminated comments handled properly") {
         error = ErrorHandler::unterimated_comment(false, 3, 4);
         REQUIRE(error == "unterminated comment starting at 3:4");
@@ -51,6 +54,8 @@ TEST_CASE("error_handler properly handles errors", "[error_handler]") {
         ErrorHandler::illegal_character(false, '=', 55, 86);
         test_helper(4);
     }
+    
+    // ------------------------------- Parser ----------------------------------
     
     SECTION("unexpected identifier handled properly") {
         Token t;
@@ -109,11 +114,52 @@ TEST_CASE("error_handler properly handles errors", "[error_handler]") {
         test_helper(1);
     }
     
+    // ---------------------------- Symbol Table -------------------------------
+    
     SECTION("undeclared identifier handled properly") {
+        Token t;
+        t.kind = IDENTIFIER;
+        t.identifier = "x";
+        t.line_position = 5;
+        t.col_position = 6;
         
+        error = ErrorHandler::undeclared_identifier(false, t);
+        REQUIRE(error == "undeclared identifier 'x' at 5:6");
+        test_helper(1);
     }
     
     SECTION("duplicate identifier handled properly") {
+        Token t;
+        t.kind = IDENTIFIER;
+        t.identifier = "x";
+        t.line_position = 15;
+        t.col_position = 16;
+        
+        Variable * v = new Variable;
+        v->line_position = 5;
+        v->col_position = 6;
+        
+        error = ErrorHandler::duplicate_identifier(false, t, v);
+        REQUIRE(error == "duplicate identifier 'x' at 15:16 conflicts with definition at 5:6");
+        test_helper(1);
+        
+        delete v;
+    }
+    
+    // -------------------------------- AST ------------------------------------
+    SECTION("non variable assignment handled properly") {
+        
+    }
+    
+    SECTION("illegal operation for type assignment handled properly") {
+        
+    }
+    
+    SECTION("operation type mismatch assignment handled properly") {
+        
+    }
+    
+    SECTION("incompatible assignment handled properly") {
         
     }
 }
