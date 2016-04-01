@@ -57,6 +57,9 @@ string Token::to_string() {
     } else if (kind == INTEGER) {
         os << "integer<" << value << ">@(" << line_position;
         os << ":" << col_position << ")";
+    } else if (kind == BOOLEAN) {
+        os << "boolean<" << value << ">@(" << line_position;
+        os << ":" << col_position << ")";
     } else {
         os << Token::mapping[kind] << "@(" << line_position;
         os << ":" << col_position << ")";

@@ -105,5 +105,4 @@ TEST_CASE("parser with AST throws correctly") {
     SECTION("incompatible assignment throws correctly") {
         
     }
-    
 }

@@ -42,8 +42,7 @@ std::string handle_arguments(int argc, const char * argv[]) {
 }
 
 void compile(std::string filename) {
-    // make this AST soon
-    RXCompiler compiler(PARSE_WITH_SYMBOLS);
+    RXCompiler compiler(GENERATE_CODE);
     compiler.set_filename(filename);
     compiler.compile();
 }

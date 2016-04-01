@@ -482,8 +482,8 @@ ExpressionNode * Parser::Expression() {
             
             BinaryNode * b = new BinaryNode;
             b->operation = operation_token.kind;
-            b->left = term;
-            b->right = root;
+            b->left = root;
+            b->right = term;
             b->type = term->type;
             
             root = b;

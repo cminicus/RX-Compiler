@@ -21,16 +21,16 @@ typedef struct dummy_token_match {
 
 class Parser {
 public:
-    Parser(Scanner&);
-    Parser(Scanner&, SymbolTable*);
-    Parser(Scanner&, SymbolTable*, AST*);
+    Parser(Scanner &);
+    Parser(Scanner &, SymbolTable *);
+    Parser(Scanner &, SymbolTable *, AST *);
     void parse();
     
 private:
     // Variables
-    Scanner& scanner;
-    SymbolTable *symbol_table;
-    AST *ast;
+    Scanner & scanner;
+    SymbolTable * symbol_table;
+    AST * ast;
     Token current;
     Token last;
     bool no_symbols = false;

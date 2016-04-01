@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "integer.h"
 
-Integer* Integer::s_instance;
+Integer * Integer::s_instance;
 
 Integer::Integer() {}
 
@@ -18,7 +18,7 @@ void Integer::DeleteInstance() {
     s_instance = nullptr;
 }
 
-Integer* Integer::Instance() {
+Integer * Integer::Instance() {
     if (s_instance == nullptr) {
         s_instance = new Integer;
     }

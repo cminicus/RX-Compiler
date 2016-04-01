@@ -54,5 +54,19 @@ void RXCompiler::compile() {
             parser.parse();
             break;
         }
+        case GENERATE_CODE: {
+            Scanner scanner(source);
+            SymbolTable symbol_table;
+            AST ast;
+            
+            Parser parser(scanner, &symbol_table, &ast);
+            parser.parse();
+            
+            CodeGenerator generator(symbol_table, ast);
+            // set backend?
+            generator.generate();
+            
+            break;
+        }
     }
 }

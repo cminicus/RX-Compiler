@@ -10,9 +10,12 @@
 #define type_h
 
 #include "entry.h"
+#include <map>
+#include <string>
 
 enum type_kind {
-    INTEGER_TYPE = 0
+    INTEGER_TYPE = 0,
+    BOOLEAN_TYPE,
 };
 
 class Type: public Entry {
@@ -20,6 +23,8 @@ public:
     virtual ~Type() {};
     entry_kind get_kind() { return TYPE_ENTRY; }
     virtual type_kind get_type_kind() = 0;
+    
+    static std::map<type_kind, std::string> mapping;
 };
 
 #endif /* type_h */

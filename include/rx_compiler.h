@@ -14,12 +14,14 @@
 
 #include "scanner.h"
 #include "parser.h"
+#include "code_generator.h"
 
 enum compiler_setting {
     SCAN = 0,
     PARSE,
     PARSE_WITH_SYMBOLS,
-    PARSE_WITH_AST
+    PARSE_WITH_AST,
+    GENERATE_CODE
 };
 
 class RXCompiler {

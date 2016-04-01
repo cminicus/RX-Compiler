@@ -21,6 +21,7 @@ enum token_kind {
     // types
     IDENTIFIER,
     INTEGER,
+    BOOLEAN,
     // keywords
     VAR,
     LET,
