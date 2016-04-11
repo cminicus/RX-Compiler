@@ -20,7 +20,7 @@ Scope::~Scope() {
         // don't try and delete singleton classes
         if (it->second->get_entry_kind() == TYPE_ENTRY) {
             
-            Type *t = dynamic_cast<Type *>(it->second);
+            Type * t = dynamic_cast<Type *>(it->second);
             if (t->get_type_kind() == INTEGER_TYPE) {
                 continue;
             }

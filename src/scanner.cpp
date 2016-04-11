@@ -165,7 +165,7 @@ bool Scanner::is_symbol(char c) {
  *
  *  @return true if the string is a keyword, false otherwise
  */
-bool Scanner::is_keyword(string s) {
+bool Scanner::is_keyword(std::string s) {
     return
     s == "var" || s == "let" || s == "if" ||
     s == "else" || s == "while" || s == "print";
@@ -236,7 +236,7 @@ Token Scanner::handle_identifier() {
  *
  *  @return the altered token containing the new keyword
  */
-Token Scanner::handle_keyword(Token t, string s) {
+Token Scanner::handle_keyword(Token t, std::string s) {
     
     if (s == "var") {
         t.kind = VAR;
@@ -285,6 +285,7 @@ Token Scanner::handle_symbol() {
         case '-': t.kind = MINUS; break;
 //        case '-':
 //            if (position < source_length - 1 && is_digit(source[position + 1])) {
+//                position++;
 //                Token digit = handle_integer();
 //                t.kind = INTEGER;
 //                t.value = -digit.value;

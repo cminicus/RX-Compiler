@@ -19,8 +19,7 @@
 
 class ConstantNode: public LocationNode {
 public:
-    ConstantNode() : constant(nullptr) {}
-    // Make a ConstantNode? Constants here don't have to resolve at compile time
+    ConstantNode(Constant * c) : constant(c) { this->type = c->type; }
     ~ConstantNode() {}
     location_kind get_location_kind() { return CONSTANT_LOCATION; };
     

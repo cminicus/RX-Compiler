@@ -25,7 +25,7 @@ public:
     node_kind get_node_kind() { return EXPRESSION_NODE; }
     virtual expression_kind get_expression_kind() = 0;
     
-    Type *type;
+    Type * type;
 };
 
 #endif /* expression_node_h */

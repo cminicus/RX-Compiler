@@ -9,6 +9,14 @@
 #include <stdio.h>
 #include "constant.h"
 
+Constant::Constant(Token token, Type * type) {
+    value = token.value;
+    line_position = token.line_position;
+    col_position = token.col_position;
+    
+    this->type = type;
+}
+
 Constant::~Constant() {
     if (type != nullptr && type->get_type_kind() != INTEGER_TYPE) {
         delete type;

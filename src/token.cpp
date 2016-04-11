@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "token.h"
 
-std::map<token_kind, string> Token::mapping = {
+std::map<token_kind, std::string> Token::mapping = {
     {VAR, "var"},
     {LET, "let"},
     {IF, "if"},
@@ -44,7 +44,7 @@ std::map<token_kind, string> Token::mapping = {
 Token::Token() :
     kind(NONE), identifier(""), value(0),  line_position(-1), col_position(-1) {}
 
-string Token::to_string() {
+std::string Token::to_string() {
     if (kind == NONE) {
         return "";
     }
@@ -58,7 +58,7 @@ string Token::to_string() {
         os << "integer<" << value << ">@(" << line_position;
         os << ":" << col_position << ")";
     } else if (kind == BOOLEAN) {
-        os << "boolean<" << value << ">@(" << line_position;
+        os << "boolean<" << (value == 1 ? "true" : "false") << ">@(" << line_position;
         os << ":" << col_position << ")";
     } else {
         os << Token::mapping[kind] << "@(" << line_position;

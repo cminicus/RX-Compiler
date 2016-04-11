@@ -13,8 +13,6 @@
 #include <sstream>
 #include <map>
 
-using std::string;
-
 enum token_kind {
     // default
     NONE = -1,
@@ -61,14 +59,14 @@ public:
     Token();
     
     token_kind kind;
-    string identifier;
+    std::string identifier;
     int value;
     
     int line_position;
     int col_position;
     
-    string to_string();
+    std::string to_string();
     
-    static std::map<token_kind, string> mapping;
+    static std::map<token_kind, std::string> mapping;
 };
 #endif /* token_h */

@@ -14,7 +14,7 @@ if x < y {
     print(y)
 }
 
-// this is a while loop
+// this is a while loop (put a + here and it messes it up)
 while x <= y {
     // this prints the variable x
     print(x)

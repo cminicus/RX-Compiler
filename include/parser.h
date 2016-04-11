@@ -64,8 +64,8 @@ private:
     void set_ast_root(Node *);
     
     // Entry Functions
-    Variable * create_variable_entry(token_match);
-    Constant * create_constant_entry(token_match);
+    Variable * create_variable_entry(token_match, Type *);
+    Constant * create_constant_entry(token_match, Type *);
     
     // Grammar Functions
     void Statements();

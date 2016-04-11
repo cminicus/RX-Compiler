@@ -14,11 +14,11 @@
 
 class NumberNode: public ExpressionNode {
 public:
-    NumberNode() : constant(nullptr) {}
+    NumberNode(Constant * c) : constant(c) { this->type = c->type; }
     ~NumberNode() { delete constant; }
     expression_kind get_expression_kind() { return NUMBER_EXPRESSION; };
     
-    Constant *constant;
+    Constant * constant;
 };
 
 #endif /* number_node_h */

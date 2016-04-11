@@ -14,14 +14,14 @@
 class Integer: public Type {
 public:
     
-    static Integer* Instance();
+    static Integer * Instance();
     static void DeleteInstance();
     entry_kind get_entry_kind() { return TYPE_ENTRY; };
     type_kind get_type_kind() { return INTEGER_TYPE; };
     
 private:
     Integer();
-    static Integer *s_instance;
+    static Integer * s_instance;
 };
 
 #endif /* integer_h */

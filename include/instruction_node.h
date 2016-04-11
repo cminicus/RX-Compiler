@@ -26,7 +26,7 @@ public:
     node_kind get_node_kind() { return INSTRUCTION_NODE; }
     virtual instruction_kind get_instruction_kind() = 0;
     
-    InstructionNode *next;
+    InstructionNode * next;
 };
 
 #endif /* instruction_node_h */

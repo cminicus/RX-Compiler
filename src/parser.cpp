@@ -253,7 +253,7 @@ void Parser::set_ast_root(Node *root) {
  *
  *  @return a variable node, or nullptr if it's a duplicate
  */
-Variable * Parser::create_variable_entry(token_match match) {
+Variable * Parser::create_variable_entry(token_match match, Type * type) {
     if (match.is_valid && !no_symbols) {
         Token t = match.token;
         
@@ -266,10 +266,7 @@ Variable * Parser::create_variable_entry(token_match match) {
             
         } else {
             
-            Variable * v = new Variable;
-            v->line_position = t.line_position;
-            v->col_position = t.col_position;
-            
+            Variable * v = new Variable(t, type);
             insert(t.identifier, v);
             
             return v;
@@ -286,7 +283,7 @@ Variable * Parser::create_variable_entry(token_match match) {
  *
  *  @return a constant node, or nullptr if it's a duplicate
  */
-Constant * Parser::create_constant_entry(token_match match) {
+Constant * Parser::create_constant_entry(token_match match, Type * type) {
     if (match.is_valid && !no_symbols) {
         Token t = match.token;
         
@@ -298,10 +295,7 @@ Constant * Parser::create_constant_entry(token_match match) {
             
         } else {
             
-            Constant * c = new Constant;
-            c->line_position = t.line_position;
-            c->col_position = t.col_position;
-            
+            Constant * c = new Constant(t, type);
             insert(t.identifier, c);
             
             return c;
@@ -377,18 +371,12 @@ DeclarationNode * Parser::VariableDeclaration() {
     match(ASSIGN);
     ExpressionNode * e = Expression();
     
-    Variable * v = create_variable_entry(m);
+    Variable * v = create_variable_entry(m, e == nullptr ? nullptr : e->type);
     
     if (!no_ast && v != nullptr) {
-        v->type = e->type;
         
-        VariableNode * node = new VariableNode;
-        node->variable = v;
-        node->type = v->type;
-        
-        DeclarationNode * declaration = new DeclarationNode;
-        declaration->location = node;
-        declaration->expression = e;
+        VariableNode * variable = new VariableNode(v);
+        DeclarationNode * declaration = new DeclarationNode(variable, e); // location, expression
         
         return declaration;
     }
@@ -405,18 +393,12 @@ DeclarationNode * Parser::ConstantDeclaration() {
     match(ASSIGN);
     ExpressionNode * e = Expression();
     
-    Constant *c = create_constant_entry(m);
+    Constant *c = create_constant_entry(m, e == nullptr ? nullptr : e->type);
     
     if (!no_ast && c != nullptr) {
-        c->type = e->type;
         
-        ConstantNode * node = new ConstantNode;
-        node->constant = c;
-        node->type = c->type;
-        
-        DeclarationNode * declaration = new DeclarationNode;
-        declaration->location = node;
-        declaration->expression = e;
+        ConstantNode * constant = new ConstantNode(c);
+        DeclarationNode * declaration = new DeclarationNode(constant, e);  // location, expression
         
         return declaration;
     }
@@ -438,27 +420,17 @@ ExpressionNode * Parser::Expression() {
     
     ExpressionNode * root = Term();
     
-    bool illegal_type = !no_ast && root->type->get_type_kind() != INTEGER_TYPE;
+    bool illegal_type = !no_ast && root != nullptr && root->type->get_type_kind() != INTEGER_TYPE;
 
     // negate the first term
     if (!no_ast && negate) {
         Constant * c = new Constant;
         c->value = 0;
-        c->type = Integer::Instance();
-        c->line_position = -1;
-        c->col_position = -1;
         
-        NumberNode * zero = new NumberNode;
-        zero->constant = c;
-        zero->type = c->type;
+        NumberNode * zero = new NumberNode(c);
+        BinaryNode * binary = new BinaryNode(last.kind, zero, root); // operation, left, right
         
-        BinaryNode * b = new BinaryNode;
-        b->operation = last.kind;
-        b->left = zero;
-        b->right = root;
-        b->type = root->type;
-        
-        root = b;
+        root = binary;
     }
     
     while (optional_match({PLUS, MINUS})) {
@@ -480,13 +452,9 @@ ExpressionNode * Parser::Expression() {
                 ErrorHandler::operation_type_mismatch(false, operation_token, term->type, root->type);
             }
             
-            BinaryNode * b = new BinaryNode;
-            b->operation = operation_token.kind;
-            b->left = root;
-            b->right = term;
-            b->type = term->type;
+            BinaryNode * binary = new BinaryNode(operation_token.kind, root, term); // operation, left, right
             
-            root = b;
+            root = binary;
         }
     }
     
@@ -501,7 +469,7 @@ ExpressionNode * Parser::Term() {
     ExpressionNode * root = Factor();
     
     // we flag an error but don't know the specific operation yet
-    bool illegal_type = !no_ast && root->type->get_type_kind() != INTEGER_TYPE;
+    bool illegal_type = !no_ast && root != nullptr && root->type->get_type_kind() != INTEGER_TYPE;
     
     while (optional_match({MULTIPLY, DIVIDE, MODULO})) {
         Token operation_token = last;
@@ -522,13 +490,9 @@ ExpressionNode * Parser::Term() {
                 ErrorHandler::operation_type_mismatch(false, operation_token, factor->type, root->type);
             }
             
-            BinaryNode * b = new BinaryNode;
-            b->operation = operation_token.kind;
-            b->left = root;
-            b->right = factor;
-            b->type = factor->type;
+            BinaryNode * binary = new BinaryNode(operation_token.kind, root, factor); // operation, left, right;
             
-            root = b;
+            root = binary;
         }
     }
 
@@ -549,15 +513,8 @@ ExpressionNode * Parser::Factor() {
             return nullptr;
         }
         
-        Constant * c = new Constant;
-        c->type = Integer::Instance();
-        c->value = m.token.value;
-        c->line_position = m.token.line_position;
-        c->col_position = m.token.col_position;
-        
-        NumberNode * number_node = new NumberNode;
-        number_node->constant = c;
-        number_node->type = c->type;
+        Constant * c = new Constant(m.token, Integer::Instance());
+        NumberNode * number_node = new NumberNode(c);
         
         return number_node;
         
@@ -580,22 +537,14 @@ ExpressionNode * Parser::Factor() {
         if (e != nullptr && e->get_entry_kind() == VARIABLE_ENTRY) {
             
             Variable * variable = dynamic_cast<Variable *>(e);
-            VariableNode * variable_node = new VariableNode;
-            
-            // attach variable to variable node
-            variable_node->variable = variable;
-            variable_node->type = variable->type;
+            VariableNode * variable_node = new VariableNode(variable);
             
             return variable_node;
             
         } else if (e != nullptr && e->get_entry_kind() == CONSTANT_ENTRY) {
             
             Constant * constant = dynamic_cast<Constant *>(e);
-            ConstantNode * constant_node = new ConstantNode;
-            
-            // attach variable to variable node
-            constant_node->constant = constant;
-            constant_node->type = constant->type;
+            ConstantNode * constant_node = new ConstantNode(constant);
             
             return constant_node;
         }
@@ -768,7 +717,7 @@ elseif:
  *  While = “while” Condition “{“ [Instructions] “}”
  */
 WhileNode * Parser::While() {
-    WhileNode *while_node = new WhileNode;
+    WhileNode * while_node = new WhileNode;
     
     match(WHILE);
     while_node->condition = Condition();
@@ -826,16 +775,12 @@ AssignNode * Parser::Assign() {
     
     // cast entry to a variable and make a variable_node
     Variable * variable = dynamic_cast<Variable *>(e);
-    VariableNode * variable_node = new VariableNode;
-    variable_node->type = variable->type;
+    VariableNode * variable_node = new VariableNode(variable);
     
     // make sure types match
     if (variable_node->type != assign_node->expression->type) {
         ErrorHandler::incompatible_assignment(false, m.token, assign_node->expression->type);
     }
-    
-    // attach variable to variable node
-    variable_node->variable = variable;
     
     // attach variable_node to assgin_node
     assign_node->location = variable_node;
@@ -869,11 +814,7 @@ PrintNode * Parser::Print() {
         
         // cast entry to a variable and make a variable_node
         Variable * variable = dynamic_cast<Variable *>(e);
-        VariableNode * variable_node = new VariableNode;
-        variable_node->type = variable->type;
-        
-        // attach variable to variable node
-        variable_node->variable = variable;
+        VariableNode * variable_node = new VariableNode(variable);
         
         // attach variable_node to assgin_node
         print_node->location = variable_node;
@@ -886,11 +827,7 @@ PrintNode * Parser::Print() {
         
         // cast entry to a variable and make a variable_node
         Constant * constant = dynamic_cast<Constant *>(e);
-        ConstantNode * constant_node = new ConstantNode;
-        constant_node->type = constant->type;
-        
-        // attach variable to variable node
-        constant_node->constant = constant;
+        ConstantNode * constant_node = new ConstantNode(constant);
         
         // attach variable_node to assgin_node
         print_node->location = constant_node;

@@ -34,7 +34,7 @@ private:
     void handle_single_comment();
     void handle_block_comments();
     
-    string source;
+    std::string source;
     int source_length;
     int position;
     

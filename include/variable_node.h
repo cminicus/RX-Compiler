@@ -14,13 +14,14 @@
 
 class VariableNode: public LocationNode {
 public:
+    VariableNode(Variable * v) : variable(v) { this->type = v->type; }
     VariableNode() : variable(nullptr) {}
     // Make a ConstantNode? Constants here don't have to resolve at compile time
     ~VariableNode() {}
     location_kind get_location_kind() { return VARIABLE_LOCATION; };
     
     // pointer to symbol table
-    Variable *variable;
+    Variable * variable;
 };
 
 #endif /* variable_node_h */

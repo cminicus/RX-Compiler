@@ -14,7 +14,11 @@
 
 class BinaryNode: public ExpressionNode {
 public:
-    BinaryNode() : operation(NONE), left(nullptr), right(nullptr) {}
+    BinaryNode(token_kind k, ExpressionNode * l, ExpressionNode * r) :
+        operation(k), left(l), right(r) {
+            type = l->type;
+        }
+    
     ~BinaryNode() { delete left; delete right; }
     expression_kind get_expression_kind() { return BINARY_EXPRESSION; };
     

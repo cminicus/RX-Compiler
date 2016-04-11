@@ -23,7 +23,7 @@ void compile(std::string);
 int main(int argc, const char * argv[]) {
     
     try {
-        string filename = handle_arguments(argc, argv);
+        std::string filename = handle_arguments(argc, argv);
         compile(filename);
         
     } catch (std::runtime_error & error) {

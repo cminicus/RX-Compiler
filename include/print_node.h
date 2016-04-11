@@ -17,7 +17,7 @@ public:
     ~PrintNode() { delete location; }
     instruction_kind get_instruction_kind() { return PRINT_INSTRUCTION; }
     
-    LocationNode *location;
+    LocationNode * location;
 };
 
 #endif /* print_node_h */

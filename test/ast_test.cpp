@@ -17,29 +17,26 @@ TEST_CASE("AST tree is properly built and destroyed") {
     condition->operation = LESS_THAN;
     
     // create number node (left side)
-    NumberNode * number = new NumberNode;
     Constant * c = new Constant;
     c->type = Integer::Instance();
     c->value = 10;
-    number->constant = c;
+    NumberNode * number = new NumberNode(c);
     
     // create binary node (right side)
     BinaryNode * binary = new BinaryNode;
     binary->operation = PLUS;
     
     // create left side of binary node
-    NumberNode * left = new NumberNode;
     Constant * c_left = new Constant;
     c_left->type = Integer::Instance();
     c_left->value = 5;
-    left->constant = c_left;
+    NumberNode * left = new NumberNode(c_left);
     
     // create right side of binary node
-    NumberNode * right = new NumberNode;
     Constant * c_right = new Constant;
     c_right->type = Integer::Instance();
     c_right->value = 7;
-    right->constant = c_right;
+    NumberNode * right = new NumberNode(c_right);
     
     // hook up binary node
     binary->left = left;

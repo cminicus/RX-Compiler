@@ -16,7 +16,7 @@ RXCompiler::RXCompiler(compiler_setting setting) {
 
 void RXCompiler::set_filename(std::string filename) {
     std::ifstream stream(filename);
-    string file((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+    std::string file((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
     this->source = file;
 }
 

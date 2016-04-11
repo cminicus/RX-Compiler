@@ -19,8 +19,8 @@ public:
     instruction_kind get_instruction_kind() { return ASSIGN_INSTRUCTION; }
     
     // check in compilers for this
-    LocationNode *location;
-    ExpressionNode *expression;
+    LocationNode * location;
+    ExpressionNode * expression;
 };
 
 #endif /* assign_node_h */

@@ -20,8 +20,8 @@ class Entry {
 public:
     virtual ~Entry() {};
     virtual entry_kind get_entry_kind() = 0;
-    int line_position;
-    int col_position;
+    int line_position = -1;
+    int col_position = -1;
 };
 
 #endif /* entry_h */

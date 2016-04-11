@@ -20,8 +20,8 @@ public:
     node_kind get_node_kind() { return CONDITION_NODE; }
     token_kind operation = NONE;
     
-    ExpressionNode *left;
-    ExpressionNode *right;
+    ExpressionNode * left;
+    ExpressionNode * right;
 };
 
 #endif /* condition_node_h */

@@ -14,7 +14,7 @@
 
 class DeclarationNode: public InstructionNode {
 public:
-    DeclarationNode() : expression(nullptr) {}
+    DeclarationNode(LocationNode * l, ExpressionNode * e) : location(l), expression(e) {}
     ~DeclarationNode() { delete location; delete expression; }
     instruction_kind get_instruction_kind() { return DECLARATION_INSTRUCTION; }
     

@@ -17,8 +17,8 @@ public:
     ~WhileNode() { delete condition; delete instructions; }
     instruction_kind get_instruction_kind() { return WHILE_INSTRUCTION; }
     
-    ConditionNode *condition;
-    InstructionNode *instructions;
+    ConditionNode * condition;
+    InstructionNode * instructions;
 };
 
 #endif /* while_node_h */
