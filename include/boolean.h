@@ -16,8 +16,9 @@ public:
     
     static Boolean * Instance();
     static void DeleteInstance();
-    entry_kind get_entry_kind() { return TYPE_ENTRY; };
-    type_kind get_type_kind() { return BOOLEAN_TYPE; };
+    entry_kind get_entry_kind() { return TYPE_ENTRY; }
+    type_kind get_type_kind() { return BOOLEAN_TYPE; }
+    int get_type_size() { return 1; }
     
 private:
     Boolean();

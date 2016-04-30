@@ -24,7 +24,7 @@ void RXCompiler::set_source(std::string source) {
     this->source = source;
 }
 
-void RXCompiler::compile() {
+std::string RXCompiler::compile() {
     switch (setting) {
         case SCAN: {
             Scanner scanner(source);
@@ -64,9 +64,12 @@ void RXCompiler::compile() {
             
             CodeGenerator generator(symbol_table, ast);
             // set backend?
-            generator.generate();
+            std::string code = generator.generate();
+//            std::cout << code << std::endl;
             
-            break;
+            return code;
         }
     }
+    
+    return "";
 }

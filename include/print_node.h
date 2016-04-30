@@ -13,11 +13,11 @@
 
 class PrintNode: public InstructionNode {
 public:
-    PrintNode() : location(nullptr) {}
-    ~PrintNode() { delete location; }
+    PrintNode() : expression(nullptr) {}
+    ~PrintNode() { delete expression; }
     instruction_kind get_instruction_kind() { return PRINT_INSTRUCTION; }
     
-    LocationNode * location;
+    ExpressionNode * expression;
 };
 
 #endif /* print_node_h */

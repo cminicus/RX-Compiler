@@ -23,6 +23,7 @@ public:
     entry_kind get_entry_kind() { return CONSTANT_ENTRY; };
     
     int value;
+    int stack_offset = -1;
     Type * type;
 };
 

@@ -19,8 +19,10 @@ public:
     SymbolTable();
     ~SymbolTable();
     
+    Scope * get_current_scope();
+    
     void create_scope();
-    void close_scope();
+    Scope * close_scope();
     
     void insert(std::string, Entry *);
     Entry * find(std::string);

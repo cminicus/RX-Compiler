@@ -182,10 +182,12 @@ void Parser::create_scope() {
 /**
  *  Closes the current scope in the symbol table if it exists
  */
-void Parser::close_scope() {
+Scope * Parser::close_scope() {
     if (symbol_table != nullptr) {
-        symbol_table->close_scope();
+        return symbol_table->close_scope();
     }
+    
+    return nullptr;
 }
 
 /**
@@ -325,12 +327,27 @@ void Parser::Statements() {
             sync(this->instructions);
         }
         
-        if (root == nullptr) {
-            root = Instructions();
-            current_node = root;
+        if (no_ast) {
+            Instructions();
+            
         } else {
-            current_node->next = Instructions();
-            current_node = current_node->next;
+            if (root == nullptr) {
+                root = Instructions();
+                current_node = root;
+                
+                // move current node to the end of the instruction list
+                while (current_node->next != nullptr) {
+                    current_node = current_node->next;
+                }
+                
+            } else {
+                current_node->next = Instructions();
+                
+                // move current node to the end of the instruction list
+                while (current_node->next != nullptr) {
+                    current_node = current_node->next;
+                }
+            }
         }
     }
     
@@ -644,20 +661,9 @@ IfNode * Parser::If() {
     ConditionNode * c = Condition();
     if_node->conditions.push_back(c);
     
-    match(OPEN_CURLY);
-    optional_match({NEW_LINE});
     
-    // create new scope for if statement
-    create_scope();
-    
-    InstructionNode * i = Instructions();
-    if_node->instructions.push_back(i);
-    
-    optional_match({NEW_LINE});
-    match(CLOSE_CURLY);
-    
-    // end scope for if statement
-    close_scope();
+    BlockNode * block = Block();
+    if_node->blocks.push_back(block);
     
 elseif:
     // else or else if clause
@@ -669,39 +675,16 @@ elseif:
             ConditionNode * c = Condition();
             if_node->conditions.push_back(c);
             
-            match(OPEN_CURLY);
-            optional_match({NEW_LINE});
-            
-            // create new scope for else if statement
-            create_scope();
-            
-            InstructionNode * i = Instructions();
-            if_node->instructions.push_back(i);
-            
-            optional_match({NEW_LINE});
-            match(CLOSE_CURLY);
-            
-            // end scope for else if statement
-            close_scope();
-            
+            BlockNode * block = Block();
+            if_node->blocks.push_back(block);
+
             goto elseif;
             
         // else clause
         } else {
-            match(OPEN_CURLY);
-            optional_match({NEW_LINE});
             
-            // create new scope for else statement
-            create_scope();
-            
-            InstructionNode * i = Instructions();
-            if_node->instructions.push_back(i);
-            
-            optional_match({NEW_LINE});
-            match(CLOSE_CURLY);
-            
-            // end scope for else statement
-            close_scope();
+            BlockNode * block = Block();
+            if_node->blocks.push_back(block);
         }
     }
     
@@ -721,20 +704,7 @@ WhileNode * Parser::While() {
     
     match(WHILE);
     while_node->condition = Condition();
-    
-    match(OPEN_CURLY);
-    optional_match({NEW_LINE});
-    
-    // create new scope for while statement
-    create_scope();
-    
-    while_node->instructions = Instructions();
-    
-    optional_match({NEW_LINE});
-    match(CLOSE_CURLY);
-    
-    // end scope for while statement
-    close_scope();
+    while_node->block = Block();
     
     if (no_ast) {
         delete while_node;
@@ -793,49 +763,38 @@ AssignNode * Parser::Assign() {
  */
 PrintNode * Parser::Print() {
     
+    PrintNode * print_node = new PrintNode;
+    
     match(PRINT);
     match(OPEN_PAREN);
-    token_match m = match(IDENTIFIER);
+    print_node->expression = Expression();
     match(CLOSE_PAREN);
     
-    if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
-        ErrorHandler::undeclared_identifier(false, m.token);
-    }
-    
     if (no_ast) {
+        delete print_node;
         return nullptr;
     }
     
-    Entry * e = find(m.token.identifier);
+    return print_node;
+}
+
+BlockNode * Parser::Block() {
+    BlockNode * block = new BlockNode;
     
-    if (e != nullptr && e->get_entry_kind() == VARIABLE_ENTRY) {
-        
-        PrintNode * print_node = new PrintNode;
-        
-        // cast entry to a variable and make a variable_node
-        Variable * variable = dynamic_cast<Variable *>(e);
-        VariableNode * variable_node = new VariableNode(variable);
-        
-        // attach variable_node to assgin_node
-        print_node->location = variable_node;
-        
-        return print_node;
-        
-    } else if (e != nullptr && e->get_entry_kind() == CONSTANT_ENTRY) {
-        
-        PrintNode * print_node = new PrintNode;
-        
-        // cast entry to a variable and make a variable_node
-        Constant * constant = dynamic_cast<Constant *>(e);
-        ConstantNode * constant_node = new ConstantNode(constant);
-        
-        // attach variable_node to assgin_node
-        print_node->location = constant_node;
-        
-        return print_node;
-    }
+    match(OPEN_CURLY);
+    optional_match({NEW_LINE});
     
-    return nullptr;
+    // create new scope for while statement
+    create_scope();
+    
+    block->instructions = Instructions();
+    
+    optional_match({NEW_LINE});
+    match(CLOSE_CURLY);
+    
+    block->scope = close_scope();
+    
+    return block;
 }
 
 /**

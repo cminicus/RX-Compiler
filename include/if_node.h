@@ -12,6 +12,8 @@
 #include "instruction_node.h"
 #include <vector>
 
+class BlockNode;
+
 class IfNode: public InstructionNode {
 public:
     IfNode() {}
@@ -20,14 +22,19 @@ public:
             delete (*it);
         }
         
-        for (auto it = instructions.begin(); it != instructions.end(); ++it) {
+//        for (auto it = instructions.begin(); it != instructions.end(); ++it) {
+//            delete (*it);
+//        }
+        
+        for (auto it = blocks.begin(); it != blocks.end(); ++it) {
             delete (*it);
         }
     }
     instruction_kind get_instruction_kind() { return IF_INSTRUCTION; }
     
     std::vector<ConditionNode *> conditions;
-    std::vector<InstructionNode *> instructions;
+//    std::vector<InstructionNode *> instructions;
+    std::vector<BlockNode *> blocks;
 };
 
 #endif /* if_node_h */

@@ -163,8 +163,20 @@ TEST_CASE("parser parses correctly", "[parser]") {
                                 "}");
     }
     
-    SECTION("print statements parse correctly") {
+    SECTION("print statements parse numbers correctly") {
+        parser_correctness_test_helper("print(4)");
+    }
+    
+    SECTION("print statements parse identifiers correctly") {
         parser_correctness_test_helper("print(y)");
+    }
+    
+    SECTION("print statements parse number expressions correctly") {
+        parser_correctness_test_helper("print(4 + 3)");
+    }
+    
+    SECTION("print statements parse variable expressions correctly") {
+        parser_correctness_test_helper("print(x + 3 - y)");
     }
 }
 

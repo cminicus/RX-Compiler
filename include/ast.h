@@ -10,6 +10,7 @@
 #define ast_h
 
 #include "condition_node.h"
+#include "block_node.h"
 #include "if_node.h"
 #include "while_node.h"
 #include "assign_node.h"

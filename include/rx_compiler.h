@@ -29,7 +29,7 @@ public:
     RXCompiler(compiler_setting);
     void set_filename(std::string filename);
     void set_source(std::string source);
-    void compile();
+    std::string compile();
     
 private:
     std::string source;

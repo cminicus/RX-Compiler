@@ -23,20 +23,26 @@ SymbolTable::~SymbolTable() {
     Integer::DeleteInstance();
 }
 
+Scope * SymbolTable::get_current_scope() {
+    return current_scope;
+}
+
 void SymbolTable::create_scope() {
-    Scope *s = new Scope;
+    Scope * s = new Scope;
     s->outer = current_scope;
     current_scope = s;
 }
 
-void SymbolTable::close_scope() {
-    Scope *inner = current_scope;
+Scope * SymbolTable::close_scope() {
+    Scope * inner = current_scope;
     current_scope = inner->outer;
-    inner->outer = nullptr;
-    current_scope->add_innner_scope(inner);
+//    inner->outer = nullptr; // ? 
+//    current_scope->add_innner_scope(inner);
+    
+    return inner;
 }
 
-void SymbolTable::insert(std::string name, Entry *entry) {
+void SymbolTable::insert(std::string name, Entry * entry) {
     current_scope->insert(name, entry);
 }
 

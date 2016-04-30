@@ -27,10 +27,12 @@ public:
     bool local(std::string);
     void add_innner_scope(Scope *);
     
-    Scope *outer;
+    Scope * outer;
+    int size = 0;
+    std::map<std::string, Entry *> entries;
     
 private:
-    std::map<std::string, Entry *> entries;
+    
     std::vector<Scope *> inner_scopes;
 };
 

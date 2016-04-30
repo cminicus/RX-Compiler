@@ -39,12 +39,14 @@ public:
     static std::string operation_type_mismatch(bool, Token, Type *, Type *);
     static std::string incompatible_assignment(bool, Token, Type *);
     
-    
-    static void push_error(bool, std::string);
     static void throw_errors();
     
 private:
+    static std::vector<std::pair<int, int>> error_locations;
     static std::vector<std::string> error_messages;
+    
+    static void push_error(bool, std::string, int, int);
+    static bool push_location(int, int);
 };
 
 #endif /* error_handler_h */

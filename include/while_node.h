@@ -11,14 +11,17 @@
 
 #include "instruction_node.h"
 
+class BlockNode;
+
 class WhileNode: public InstructionNode {
 public:
-    WhileNode() : condition(nullptr), instructions(nullptr) {}
-    ~WhileNode() { delete condition; delete instructions; }
+    WhileNode() : condition(nullptr), block(nullptr) {}
+    ~WhileNode() { delete condition; delete block; }
     instruction_kind get_instruction_kind() { return WHILE_INSTRUCTION; }
     
     ConditionNode * condition;
-    InstructionNode * instructions;
+//    InstructionNode * instructions;
+    BlockNode * block;
 };
 
 #endif /* while_node_h */

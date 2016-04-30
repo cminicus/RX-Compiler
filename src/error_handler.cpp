@@ -11,20 +11,21 @@
 #include "error_handler.h"
 
 std::vector<std::string> ErrorHandler::error_messages;
+std::vector<std::pair<int, int>> ErrorHandler::error_locations;
 
 // --------------------------------- Errors ------------------------------------
 
 // Scanner
 std::string ErrorHandler::unterimated_comment(bool flag, int line_number, int col_number) {
     std::string s = UNTERMINATED_COMMENT(line_number, col_number);
-    push_error(flag, s);
+    push_error(flag, s, line_number, col_number);
     return s;
 }
 
 std::string ErrorHandler::illegal_character(bool flag, char c, int line_number, int col_number) {
     std::string ch(1, c);
     std::string s = ILLEGAL_CHARACTER(ch, line_number, col_number);
-    push_error(flag, s);
+    push_error(flag, s, line_number, col_number);
     return s;
 }
 
@@ -67,7 +68,7 @@ std::string ErrorHandler::unexpected_token(bool flag, Token encountered, token_k
                            encountered.col_position);
     }
  
-    push_error(flag, s);
+    push_error(flag, s, encountered.line_position, encountered.col_position);
     return s;
 }
 
@@ -118,7 +119,8 @@ std::string ErrorHandler::unexpected_token(bool flag, Token encountered, std::ve
                                       matches,
                                       encountered.line_position,
                                       encountered.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, encountered.line_position, encountered.col_position);
     return s;
 }
 
@@ -143,18 +145,20 @@ std::string ErrorHandler::expected_instruction(bool flag, Token encountered) {
                                          enc,
                                          encountered.line_position,
                                          encountered.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, encountered.line_position, encountered.col_position);
     return s;
 }
 
 // Symbol Table
-std::string ErrorHandler::duplicate_identifier(bool flag, Token encountered, Entry *e) {
+std::string ErrorHandler::duplicate_identifier(bool flag, Token encountered, Entry * e) {
     std::string s = DUPLICATE_IDENTIFIER(encountered.identifier,
                                          encountered.line_position,
                                          encountered.col_position,
                                          e->line_position,
                                          e->col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, encountered.line_position, encountered.col_position);
     return s;
 }
 
@@ -162,7 +166,8 @@ std::string ErrorHandler::undeclared_identifier(bool flag, Token encountered) {
     std::string s = UNDECLARED_IDENTIFIER(encountered.identifier,
                                           encountered.line_position,
                                           encountered.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, encountered.line_position, encountered.col_position);
     return s;
 }
 
@@ -171,7 +176,8 @@ std::string ErrorHandler::non_variable_assignment(bool flag, Token token) {
     std::string s = NON_VARIABLE_ASSIGNMENT(token.identifier,
                                             token.line_position,
                                             token.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, token.line_position, token.col_position);
     return s;
 }
 
@@ -180,7 +186,8 @@ std::string ErrorHandler::illegal_operation_for_type(bool flag, Token token, Typ
                                                Type::mapping[type->get_type_kind()],
                                                token.line_position,
                                                token.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, token.line_position, token.col_position);
     return s;
 }
 
@@ -190,7 +197,8 @@ std::string ErrorHandler::operation_type_mismatch(bool flag, Token token, Type *
                                             Type::mapping[type2->get_type_kind()],
                                             token.line_position,
                                             token.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, token.line_position, token.col_position);
     return s;
 }
 
@@ -199,17 +207,31 @@ std::string ErrorHandler::incompatible_assignment(bool flag, Token token, Type *
                                             Type::mapping[type->get_type_kind()],
                                             token.line_position,
                                             token.col_position);
-    push_error(flag, s);
+    
+    push_error(flag, s, token.line_position, token.col_position);
     return s;
 }
 
 // -------------------------------- Utility ------------------------------------
 
-void ErrorHandler::push_error(bool flag, std::string error) {
-    error_messages.push_back(error);
-    if (flag) {
-        throw_errors();
+void ErrorHandler::push_error(bool flag, std::string error, int line, int col) {
+    if (push_location(line, col)) {
+        error_messages.push_back(error);
+        if (flag) {
+            throw_errors();
+        }
     }
+}
+
+bool ErrorHandler::push_location(int line, int col) {
+    std::pair<int, int> pair = {line, col};
+    
+    if (std::find(error_locations.begin(), error_locations.end(), pair) != error_locations.end()) {
+        return false;
+    }
+    
+    error_locations.push_back(pair);
+    return true;
 }
 
 void ErrorHandler::throw_errors() {
@@ -223,6 +245,7 @@ void ErrorHandler::throw_errors() {
     
     int size = error_messages.size();
     error_messages.clear();
+    error_locations.clear();
     
     if (size == 1) {
         throw std::runtime_error("ended with 1 error");

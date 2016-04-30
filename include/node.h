@@ -12,7 +12,8 @@
 enum node_kind {
     INSTRUCTION_NODE,
     EXPRESSION_NODE,
-    CONDITION_NODE
+    CONDITION_NODE,
+    BLOCK_NODE
 };
 
 class Node {

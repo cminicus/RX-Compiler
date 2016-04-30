@@ -22,10 +22,6 @@ TEST_CASE("AST tree is properly built and destroyed") {
     c->value = 10;
     NumberNode * number = new NumberNode(c);
     
-    // create binary node (right side)
-    BinaryNode * binary = new BinaryNode;
-    binary->operation = PLUS;
-    
     // create left side of binary node
     Constant * c_left = new Constant;
     c_left->type = Integer::Instance();
@@ -38,9 +34,8 @@ TEST_CASE("AST tree is properly built and destroyed") {
     c_right->value = 7;
     NumberNode * right = new NumberNode(c_right);
     
-    // hook up binary node
-    binary->left = left;
-    binary->right = right;
+    // create binary node (right side)
+    BinaryNode * binary = new BinaryNode(PLUS, left, right);
     
     // hook up condition node
     condition->left = number;

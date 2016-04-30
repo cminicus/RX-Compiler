@@ -30,10 +30,10 @@ Scope::~Scope() {
     }
     entries.clear();
     
-    for (auto it = inner_scopes.begin(); it != inner_scopes.end(); ++it) {
-        delete *it;
-    }
-    inner_scopes.clear();
+//    for (auto it = inner_scopes.begin(); it != inner_scopes.end(); ++it) {
+//        delete *it;
+//    }
+//    inner_scopes.clear();
 }
 
 void Scope::insert(std::string name, Entry * value) {

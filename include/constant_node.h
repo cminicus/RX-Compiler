@@ -24,7 +24,7 @@ public:
     location_kind get_location_kind() { return CONSTANT_LOCATION; };
     
     // pointer to symbol table
-    Constant *constant;
+    Constant * constant;
 };
 
 #endif /* constant_node_h */

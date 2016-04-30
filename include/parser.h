@@ -55,7 +55,7 @@ private:
     
     // Symbol Table Functions
     void create_scope();
-    void close_scope();
+    Scope * close_scope();
     void insert(std::string, Entry *);
     Entry * find(std::string);
     bool local(std::string);
@@ -84,6 +84,7 @@ private:
     WhileNode * While();
     AssignNode * Assign();
     PrintNode * Print();
+    BlockNode * Block();
     ConditionNode * Condition();
 };
 

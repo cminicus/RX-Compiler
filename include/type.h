@@ -23,6 +23,7 @@ public:
     virtual ~Type() {};
     entry_kind get_kind() { return TYPE_ENTRY; }
     virtual type_kind get_type_kind() = 0;
+    virtual int get_type_size() = 0;
     
     static std::map<type_kind, std::string> mapping;
 };
