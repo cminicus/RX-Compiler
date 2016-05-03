@@ -11,7 +11,6 @@
 #include "catch.hpp"
 #include "scanner.h"
 
-
 TEST_CASE("scanner scans correctly", "[scanner]") {
     Token t;
     
@@ -81,7 +80,7 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
     
     // ------------------------------ Keywords ---------------------------------
     SECTION("scanner scans keywords correctly") {
-        Scanner s("var let if else while print");
+        Scanner s("var let if else while print scan");
         t = s.next();
         REQUIRE(t.to_string() == "var@(1:1)");
         
@@ -99,6 +98,9 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
         
         t = s.next();
         REQUIRE(t.to_string() == "print@(1:23)");
+        
+        t = s.next();
+        REQUIRE(t.to_string() == "scan@(1:29)");
     }
     
     // ------------------------------ Symbols ----------------------------------

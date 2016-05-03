@@ -62,9 +62,19 @@ TEST_CASE("tokens initialize correctly", "[token]") {
         REQUIRE(t.to_string() == "else@(0:10)");
     }
     
-    SECTION("WHILE token prints correctly") {
+    SECTION("while token prints correctly") {
         t.kind = WHILE;
         REQUIRE(t.to_string() == "while@(0:10)");
+    }
+    
+    SECTION("print token prints correctly") {
+        t.kind = PRINT;
+        REQUIRE(t.to_string() == "print@(0:10)");
+    }
+    
+    SECTION("scan token prints correctly") {
+        t.kind = SCAN;
+        REQUIRE(t.to_string() == "scan@(0:10)");
     }
     
     SECTION("( token prints correctly") {

@@ -13,7 +13,7 @@
 #include "rx_compiler.h"
 
 void parser_correctness_test_helper(std::string program) {
-    RXCompiler compiler(PARSE);
+    RXCompiler compiler(PARSE_ONLY);
     compiler.set_source(program);
     REQUIRE_NOTHROW(compiler.compile());
 }
@@ -163,6 +163,8 @@ TEST_CASE("parser parses correctly", "[parser]") {
                                 "}");
     }
     
+    // ---------------------------- Read/Print ---------------------------------
+    
     SECTION("print statements parse numbers correctly") {
         parser_correctness_test_helper("print(4)");
     }
@@ -178,10 +180,14 @@ TEST_CASE("parser parses correctly", "[parser]") {
     SECTION("print statements parse variable expressions correctly") {
         parser_correctness_test_helper("print(x + 3 - y)");
     }
+    
+    SECTION("scan statements parse correctly") {
+        parser_correctness_test_helper("scan(x)");
+    }
 }
 
 void parser_exception_test_helper(std::string program) {
-    RXCompiler compiler(PARSE);
+    RXCompiler compiler(PARSE_ONLY);
     compiler.set_source(program);
     REQUIRE_THROWS(compiler.compile());
 }
@@ -352,6 +358,25 @@ TEST_CASE("parser throws correctly for print statements") {
     }
     
     SECTION("missing closing parenthesis") {
-        parser_exception_test_helper("printy)");
+        parser_exception_test_helper("print(y");
+    }
+}
+
+TEST_CASE("parser throws correctly for scan statements") {
+    
+    SECTION("missing scan") {
+        parser_exception_test_helper("(y)");
+    }
+    
+    SECTION("missing opening parenthesis") {
+        parser_exception_test_helper("scany)");
+    }
+    
+    SECTION("missing argument") {
+        parser_exception_test_helper("scan()");
+    }
+    
+    SECTION("missing closing parenthesis") {
+        parser_exception_test_helper("scan(y");
     }
 }

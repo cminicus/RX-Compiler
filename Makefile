@@ -39,10 +39,14 @@ TEST_OBJECTS = $(patsubst $(TEST_DIR)/%,$(BUILD_DIR)/%,$(TEST_SOURCES:.$(SRC_EXT
 CXX = g++
 
 # standard compile flags
-CXXFLAGS = -std=c++14 -Wall -Wextra -pedantic -O0 -g #-Werror
+# CXXFLAGS = -std=c++14 -Wall -Wextra -pedantic -O0 -g -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS #-Werror
+CXXFLAGS = -std=c++14 -Wall -Wextra -pedantic -O0 -g `llvm-config --cppflags` #-Werror
+
+LDFLAGS = `llvm-config --ldflags --system-libs`
+LIBS = `llvm-config --libs` # links against all libraries
 
 # include files
-INC = -I include
+INC = -I include -I/usr/local/opt/llvm/include
 
 ##########################
 # executable targets
@@ -52,12 +56,12 @@ INC = -I include
 $(TARGET): $(OBJECTS) $(MAIN)
 	@echo "Linking..."
 	@echo $(MAIN)
-	@echo "$(CXX) $^ -o $(TARGET)"; $(CXX) $^ -o $(TARGET)
+	@echo "$(CXX) $^ -o $(TARGET)"; $(CXX) $(LDFLAGS) $(LIBS) $^ -o $(TARGET)
 
 # test target
 test: $(TEST_OBJECTS) $(OBJECTS)
 	@echo "Linking..."
-	@echo "$(CXX) $^ -o $(TEST_TARGET)"; $(CXX) $^ -o $(TEST_TARGET)
+	@echo "$(CXX) $^ -o $(TEST_TARGET)"; $(CXX) $(LDFLAGS) $(LIBS) $^ -o $(TEST_TARGET)
 	@echo "Running tests...";
 	./bin/test
 

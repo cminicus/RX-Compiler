@@ -15,6 +15,7 @@ Constant::Constant(Token token, Type * type) {
     col_position = token.col_position;
     
     this->type = type;
+    identifier = token.identifier;
 }
 
 Constant::~Constant() {

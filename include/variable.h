@@ -25,6 +25,7 @@ public:
     int value;
     int stack_offset = -1;
     Type * type;
+    std::string identifier;
 };
 
 

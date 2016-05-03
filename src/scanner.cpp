@@ -168,7 +168,8 @@ bool Scanner::is_symbol(char c) {
 bool Scanner::is_keyword(std::string s) {
     return
     s == "var" || s == "let" || s == "if" ||
-    s == "else" || s == "while" || s == "print";
+    s == "else" || s == "while" || s == "print" ||
+    s == "scan";
 }
 
 /**
@@ -250,6 +251,8 @@ Token Scanner::handle_keyword(Token t, std::string s) {
         t.kind = WHILE;
     } else if (s == "print") {
         t.kind = PRINT;
+    } else if (s == "scan") {
+        t.kind = SCAN;
     }
     
     return t;
@@ -369,32 +372,6 @@ void Scanner::handle_single_comment() {
         col_number++;
     }
 }
-
-//Token Scanner::handle_single_comment() {
-//    Token t;
-//    while (position < source_length) {
-//        char c = source[position];
-//        
-//        if (is_new_line(c)) {
-//            t.kind = NEW_LINE;
-//            t.line_position = line_number;
-//            t.col_position = col_number;
-//            
-//            line_number++;
-//            content_flag = false;
-//            col_number = 1;
-//            position++;
-//            return t;
-//        }
-//        position++;
-//        col_number++;
-//    }
-//    
-//    t.kind = END_OF_FILE;
-//    t.line_position = line_number;
-//    t.col_position = col_number;
-//    return t;
-//}
 
 /**
  *  Handles parsing the source code for block comments

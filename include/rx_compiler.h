@@ -11,17 +11,20 @@
 
 #include <string>
 #include <fstream>
+#include <cstdlib>
 
 #include "scanner.h"
 #include "parser.h"
-#include "code_generator.h"
+#include "llvm_generator.h"
 
 enum compiler_setting {
-    SCAN = 0,
-    PARSE,
+    SCAN_ONLY = 0,
+    PARSE_ONLY,
     PARSE_WITH_SYMBOLS,
     PARSE_WITH_AST,
-    GENERATE_CODE
+    GENERATE_CODE,
+    BUILD,
+    RUN
 };
 
 class RXCompiler {

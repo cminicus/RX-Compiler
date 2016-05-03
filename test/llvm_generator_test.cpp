@@ -1,5 +1,5 @@
 //
-//  code_generator_test.cpp
+//  llvm_generator_test.cpp
 //  RX Compiler
 //
 //  Created by Clayton Minicus on 4/22/16.
@@ -15,15 +15,12 @@
 
 void code_generator_test_helper(std::string program, std::string output) {
     // generate code
-    RXCompiler compiler(GENERATE_CODE);
+    RXCompiler compiler(BUILD);
     compiler.set_source(program);
     
-    // compile assembly and output to test.s
-    std::string code = compiler.compile();
-    std::ofstream("test.s") << code;
+    compiler.compile();
     
-    // compile and redirect output to compiler_output.txt
-    std::system("gcc test.s");
+    // redirect output to compiler_output.txt
     std::system("./a.out > compiler_output.txt");
     
     // read in compiler_output.txt
@@ -34,7 +31,7 @@ void code_generator_test_helper(std::string program, std::string output) {
     REQUIRE(file == output);
     
     // remove left over files
-    std::system("rm test.s && rm a.out && rm compiler_output.txt");
+    std::system("rm a.out && rm compiler_output.txt");
 }
 
 #pragma mark Print Blocks
@@ -187,17 +184,16 @@ TEST_CASE("assign blocks generate correct code") {
         std::string program = "var x = 4; var y = 3; y = x; print(y)";
         code_generator_test_helper(program, "4\n");
     }
-    
+
     SECTION("constant-offset constant integer assignment generates correctly") {
         std::string program = "let x = 4; var y = 3; y = x; print(y)";
         code_generator_test_helper(program, "4\n");
     }
 }
 
-#pragma mark If Blocks
+#pragma mark Comparison Blocks
 
-// test comparison with if/else statements
-TEST_CASE("constant comparison blocks generate correct code") {
+TEST_CASE("comparison blocks generate correct code") {
     
     // Both Constant
     
@@ -248,7 +244,7 @@ TEST_CASE("constant comparison blocks generate correct code") {
         program = "if 0 >= 1 { print(1) }";
         code_generator_test_helper(program, "");
     }
-    
+
     // Left Non-Constant
     
     SECTION("equals right constant comparison generates correctly") {
@@ -400,6 +396,8 @@ TEST_CASE("constant comparison blocks generate correct code") {
     }
 }
 
+#pragma mark If Blocks
+
 TEST_CASE("if blocks generate correct code") {
     
     SECTION("constant conditions generate correct code") {
@@ -488,11 +486,11 @@ TEST_CASE("if else if else blocks generate correct code") {
         "let x = 1; let y = 2; if x > y { print(1) } else if x == y { print(2) } else { print(3) }";
         code_generator_test_helper(program, "3\n");
     }
-    
 }
 
 TEST_CASE("nested if statements generate correct code") {
-    
+    std::string program = "let x = 1; let y = 2; if x <= y { print(1); if x != y { print(2) } }";
+    code_generator_test_helper(program, "1\n2\n");
 }
 
 #pragma mark While Blocks
@@ -511,4 +509,16 @@ TEST_CASE("while blocks generate correct code") {
     }
 }
 
-// nested control statements, declarations inside blocks,
+#pragma mark Nested Control Statements
+
+TEST_CASE("nested control statements generate correct code") {
+    SECTION("while nested inside an if block generates correct code code") {
+        std::string program = "if 1 < 2 { var x = 4; while x < 8 { print(x); x = x + 1 } }";
+        code_generator_test_helper(program, "4\n5\n6\n7\n");
+    }
+}
+
+TEST_CASE("declarations inside control statements generate correct code") {
+    std::string program = "let x = 3; if 1 < 2 { let x = 4; print(x) }; print(x)";
+    code_generator_test_helper(program, "4\n3\n");
+}

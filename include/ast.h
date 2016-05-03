@@ -15,6 +15,7 @@
 #include "while_node.h"
 #include "assign_node.h"
 #include "print_node.h"
+#include "scan_node.h"
 #include "declaration_node.h"
 #include "number_node.h"
 #include "binary_node.h"

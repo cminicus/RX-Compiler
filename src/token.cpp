@@ -16,6 +16,7 @@ std::map<token_kind, std::string> Token::mapping = {
     {ELSE, "else"},
     {WHILE, "while"},
     {PRINT, "print"},
+    {SCAN, "scan"},
     
     {OPEN_PAREN, "("},
     {CLOSE_PAREN, ")"},

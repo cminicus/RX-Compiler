@@ -86,6 +86,10 @@ TEST_CASE("parser with AST throws correctly") {
         ast_exception_test_helper("let x = 4; x = 8");
     }
     
+    SECTION("non variable scan throws correctly") {
+        ast_exception_test_helper("let x = 4; scan(x)");
+    }
+    
     SECTION("illegal operation for type throws correctly") {
         
     }

@@ -1,3 +1,56 @@
-let x = 4; print(x + 12)
+// let x = 4; print(x + 12)
 
-let 2 = 1 // segaults
+// let 2 = 1 // segaults
+
+if 1 < 2 {
+    var x = 4
+    while x < 8 {
+        print(x)
+        x = x + 1
+    }
+}
+
+
+let x = Vector<i32>()
+for y in x {
+    print(y :: i16)
+}
+
+f32
+char
+bool
+
+fun guac = p: i32, q: i16 ==> p + (i32) q
+
+let x = p: i32 ==> print(p)
+let x = p: i32 -> i32 ==> print(p); p
+
+
+let x :: i16 = function()
+let x = function() as i16
+
+let x :: i1 = true
+
+let i = { 2 + 1 }
+
+let i = { x - 1 + 4 } in (x: i32) -> i32
+
+let i = {
+    x - 1 + 4
+} in (x: i32) -> i32
+
+let i = { (x: i32) -> i32
+    x - 4 + 1
+}
+
+i(4)
+
+// brackets delay execution, area = x + y computes it immediately
+struct r = { x: i32, y: i32, area = { x + y } }
+r(x: mine, y: yours);
+r.area
+
+
+match x with {
+    p: i32 ==> x + 1
+}

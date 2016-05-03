@@ -335,6 +335,10 @@ void Parser::Statements() {
                 root = Instructions();
                 current_node = root;
                 
+                if (current_node == nullptr) {
+                    continue;
+                }
+                
                 // move current node to the end of the instruction list
                 while (current_node->next != nullptr) {
                     current_node = current_node->next;
@@ -637,6 +641,9 @@ InstructionNode * Parser::Instruction() {
     } else if (check({PRINT})) {
         instruction_node = Print();
         
+    } else if (check({SCAN})) {
+        instruction_node = Scan();
+        
     } else if (check({VAR, LET})) {
         instruction_node = Declaration();
         
@@ -759,7 +766,7 @@ AssignNode * Parser::Assign() {
 }
 
 /**
- *  Print = “print” “(“ identifier “)”
+ *  Print = “print” “(“ Expression “)”
  */
 PrintNode * Parser::Print() {
     
@@ -776,6 +783,46 @@ PrintNode * Parser::Print() {
     }
     
     return print_node;
+}
+
+ScanNode * Parser::Scan() {
+    
+    match(SCAN);
+    match(OPEN_PAREN);
+    token_match m = match(IDENTIFIER);
+    match(CLOSE_PAREN);
+    
+    if (no_symbols) {
+        return nullptr;
+    }
+    
+    if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
+        ErrorHandler::undeclared_identifier(false, m.token);
+    }
+    
+    Entry * e = find(m.token.identifier);
+    
+    if (e == nullptr || e->get_entry_kind() != VARIABLE_ENTRY) {
+        ErrorHandler::non_variable_assignment(false, m.token); // use this error for now ,it's fine
+        // TODO Error for using a constant with scan
+        return nullptr;
+    }
+    
+    // leave if not using ast
+    if (no_ast) {
+        return nullptr;
+    }
+
+    ScanNode * scan_node = new ScanNode;
+    
+    // cast entry to a variable and make a variable_node
+    Variable * variable = dynamic_cast<Variable *>(e);
+    VariableNode * variable_node = new VariableNode(variable);
+    
+    // attach variable_node to assgin_node
+    scan_node->location = variable_node;
+    
+    return scan_node;
 }
 
 BlockNode * Parser::Block() {

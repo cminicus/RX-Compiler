@@ -16,10 +16,12 @@
 enum token_kind {
     // default
     NONE = -1,
+    
     // types
     IDENTIFIER,
     INTEGER,
     BOOLEAN,
+    
     // keywords
     VAR,
     LET,
@@ -27,6 +29,7 @@ enum token_kind {
     ELSE,
     WHILE,
     PRINT,
+    SCAN,
     
     // symbols
     OPEN_PAREN,

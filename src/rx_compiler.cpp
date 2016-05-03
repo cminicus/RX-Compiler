@@ -26,11 +26,11 @@ void RXCompiler::set_source(std::string source) {
 
 std::string RXCompiler::compile() {
     switch (setting) {
-        case SCAN: {
+        case SCAN_ONLY: {
             Scanner scanner(source);
             break;
         }
-        case PARSE: {
+        case PARSE_ONLY: {
             Scanner scanner(source);
             
             Parser parser(scanner);
@@ -62,10 +62,68 @@ std::string RXCompiler::compile() {
             Parser parser(scanner, &symbol_table, &ast);
             parser.parse();
             
-            CodeGenerator generator(symbol_table, ast);
-            // set backend?
+            LLVMGenerator generator(ast);
+            
+            // generate code
             std::string code = generator.generate();
-//            std::cout << code << std::endl;
+            std::cout << code << std::endl;
+            
+            return code;
+        }
+        case BUILD: {
+            Scanner scanner(source);
+            SymbolTable symbol_table;
+            AST ast;
+            
+            Parser parser(scanner, &symbol_table, &ast);
+            parser.parse();
+            
+            LLVMGenerator generator(ast);
+            
+            // generate code
+            std::string code = generator.generate();
+            
+            // output code to .ll file
+            std::ofstream("test.ll") << code;
+            
+            // compile IR to native architecture
+            std::system("llc test.ll");
+            
+            // compile assembly to executable
+            std::system("gcc test.s");
+            
+            // remove left over .ll file
+            std::system("rm test.ll && rm test.s");
+            
+            return code;
+        }
+        case RUN: {
+            Scanner scanner(source);
+            SymbolTable symbol_table;
+            AST ast;
+            
+            Parser parser(scanner, &symbol_table, &ast);
+            parser.parse();
+            
+            LLVMGenerator generator(ast);
+            
+            // generate code
+            std::string code = generator.generate();
+            
+            // output code to .ll file
+            std::ofstream("test.ll") << code;
+            
+            // compile IR to native architecture
+            std::system("llc test.ll");
+            
+            // compile assembly to executable
+            std::system("gcc test.s");
+            
+            // run executable
+            std::system("./a.out");
+            
+            // remove left over .ll file
+            std::system("rm test.ll && rm test.s");
             
             return code;
         }

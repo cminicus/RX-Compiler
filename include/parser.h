@@ -37,7 +37,7 @@ private:
     bool no_ast = false;
     
     std::vector<token_kind> instructions = {
-        IF, WHILE, IDENTIFIER, PRINT, VAR, LET
+        IF, WHILE, IDENTIFIER, PRINT, SCAN, VAR, LET
     };
     
     std::vector<token_kind> conditions = {
@@ -84,6 +84,8 @@ private:
     WhileNode * While();
     AssignNode * Assign();
     PrintNode * Print();
+    ScanNode * Scan();
+    
     BlockNode * Block();
     ConditionNode * Condition();
 };

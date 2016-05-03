@@ -114,6 +114,16 @@ TEST_CASE("parser with symbol table parses correctly") {
     SECTION("scoped declarations in while statements are parsed correctly") {
         symbol_correctness_test_helper("while 2 < 4 { let x = 4 }; let x = 6");
     }
+    
+    
+    
+    SECTION("print statements are parsed correctly") {
+        symbol_correctness_test_helper("let x = 4; print(x)");
+    }
+    
+    SECTION("scan statements are parsed correctly") {
+        symbol_correctness_test_helper("var x = 4; scan(x)");
+    }
 }
 
 void symbol_exception_test_helper(std::string program) {
@@ -131,5 +141,13 @@ TEST_CASE("parser with symbol table throws correctly") {
     
     SECTION("duplicated identifiers throw correctly") {
         symbol_exception_test_helper("let x = 4; let x = 6");
+    }
+    
+    SECTION("print statements throw correctly") {
+        symbol_exception_test_helper("print(x)");
+    }
+    
+    SECTION("scan statements throw correctly") {
+        symbol_exception_test_helper("scan(x)");
     }
 }
