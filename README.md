@@ -13,8 +13,8 @@ Currently I'm working on finishing the RX compiler while finishing my Compilers 
 - Scanner
 - Parser
 - Symbol Table
-- Abstract Syntax Tree (not finished)
-- Code Generation (not finished)
+- Abstract Syntax Tree
+- Code Generation
 
 ### Grammar
 
