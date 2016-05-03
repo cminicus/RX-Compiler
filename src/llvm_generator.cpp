@@ -12,10 +12,35 @@
 LLVMGenerator::LLVMGenerator(AST & root) : ast(root), Builder(Context) {
     
     module = new llvm::Module("ir.ll", Context);
+    initializePassManager();
+}
+
+void LLVMGenerator::initializePassManager() {
+    PM = new llvm::legacy::PassManager();
+    
+//    LLVMInitializeNativeTarget();
+
+    // simplify body of loops
+    PM->add(llvm::createLoopSimplifyPass());
+    // promote memory reference to register references
+    PM->add(llvm::createPromoteMemoryToRegisterPass());
+    // combine instructions (can leave dead code so do a subsequent DCE pass)
+    PM->add(llvm::createInstructionCombiningPass());
+    // reassociate expressions
+    PM->add(llvm::createReassociatePass());
+    // eliminate common subexpressions
+    PM->add(llvm::createGVNPass());
+    //simplify control flow graph
+    PM->add(llvm::createCFGSimplificationPass());
+    // agressive dead code elimination
+    PM->add(llvm::createAggressiveDCEPass());
 }
 
 std::string LLVMGenerator::generate() {
     generate_ast();
+    
+    llvm::verifyModule(*module);
+    PM->run(*module);
     
     std::string output;
     llvm::raw_string_ostream output_stream(output);
@@ -28,7 +53,7 @@ std::string LLVMGenerator::generate() {
 void LLVMGenerator::generate_ast() {
     Node * root = ast.get_root();
     
-    
+    // for now, create main function and "entry" block
     llvm::FunctionType * main_type = llvm::FunctionType::get(llvm::IntegerType::get(Context, 32), false);
     llvm::Function * main = llvm::Function::Create(
         main_type,
@@ -40,12 +65,11 @@ void LLVMGenerator::generate_ast() {
     llvm::BasicBlock * bb = llvm::BasicBlock::Create(Context, "entry", main);
     Builder.SetInsertPoint(bb);
     
-    
-    
+    // generate instructions
     generate_instruction(dynamic_cast<InstructionNode *>(root));
     
+    // create implicit return
     Builder.CreateRet(llvm::ConstantInt::get(Context, llvm::APInt(32, 0)));
-//    module->dump();
 }
 
 // ------------------------------- Instructions --------------------------------
@@ -56,11 +80,11 @@ void LLVMGenerator::generate_instruction(InstructionNode * node) {
     }
     
     switch (node->get_instruction_kind()) {
-        case IF_INSTRUCTION:          generate_if         (dynamic_cast<IfNode *>(node)); break;
-        case WHILE_INSTRUCTION:       generate_while      (dynamic_cast<WhileNode *>(node)); break;
-        case ASSIGN_INSTRUCTION:      generate_assign     (dynamic_cast<AssignNode *>(node)); break;
-        case PRINT_INSTRUCTION:       generate_print      (dynamic_cast<PrintNode *>(node)); break;
-        case SCAN_INSTRUCTION:        generate_scan       (dynamic_cast<ScanNode *>(node)); break;
+        case IF_INSTRUCTION:          generate_if         (dynamic_cast<IfNode *>(node));          break;
+        case WHILE_INSTRUCTION:       generate_while      (dynamic_cast<WhileNode *>(node));       break;
+        case ASSIGN_INSTRUCTION:      generate_assign     (dynamic_cast<AssignNode *>(node));      break;
+        case PRINT_INSTRUCTION:       generate_print      (dynamic_cast<PrintNode *>(node));       break;
+        case SCAN_INSTRUCTION:        generate_scan       (dynamic_cast<ScanNode *>(node));        break;
         case DECLARATION_INSTRUCTION: generate_declaration(dynamic_cast<DeclarationNode *>(node)); break;
     }
     
@@ -255,7 +279,6 @@ llvm::Value * LLVMGenerator::generate_condition(ConditionNode * node) {
     llvm::Value * left = generate_expression(node->left);
     llvm::Value * right = generate_expression(node->right);
     
-    
     if (node->left->get_expression_kind() == LOCATION_EXPRESSION) {
         left = Builder.CreateLoad(left);
     }
@@ -267,9 +290,9 @@ llvm::Value * LLVMGenerator::generate_condition(ConditionNode * node) {
     switch (node->operation) {
         case EQUALS:              return Builder.CreateICmpEQ (left, right, "==");
         case NOT_EQUALS:          return Builder.CreateICmpNE (left, right, "!=");
-        case LESS_THAN:           return Builder.CreateICmpSLT(left, right, "<");
+        case LESS_THAN:           return Builder.CreateICmpSLT(left, right, "<" );
         case LESS_THAN_EQUALS:    return Builder.CreateICmpSLE(left, right, "<=");
-        case GREATER_THAN:        return Builder.CreateICmpSGT(left, right, ">");
+        case GREATER_THAN:        return Builder.CreateICmpSGT(left, right, ">" );
         case GREATER_THAN_EQUALS: return Builder.CreateICmpSGE(left, right, ">=");
         default:                  return nullptr;
     }
@@ -285,8 +308,8 @@ void LLVMGenerator::generate_block(BlockNode * node) {
 
 llvm::Value * LLVMGenerator::generate_expression(ExpressionNode * node) {
     switch (node->get_expression_kind()) {
-        case NUMBER_EXPRESSION:   return generate_number  (dynamic_cast<NumberNode *>(node)); break;
-        case BINARY_EXPRESSION:   return generate_binary  (dynamic_cast<BinaryNode *>(node)); break;
+        case NUMBER_EXPRESSION:   return generate_number  (dynamic_cast<NumberNode *>(node));   break;
+        case BINARY_EXPRESSION:   return generate_binary  (dynamic_cast<BinaryNode *>(node));   break;
         case LOCATION_EXPRESSION: return generate_location(dynamic_cast<LocationNode *>(node)); break;
     }
 }
@@ -333,10 +356,11 @@ llvm::Value * LLVMGenerator::generate_variable(VariableNode * node) {
     
     // check if allocation exists
     if (!allocations[node->variable]) {
+        // create/save allocation if not
         allocations[node->variable] = Builder.CreateAlloca(llvm::IntegerType::get(module->getContext(), 32));
     }
     
-    return allocations[node->variable] ;
+    return allocations[node->variable];
 }
 
 llvm::Value * LLVMGenerator::generate_constant(ConstantNode * node) {

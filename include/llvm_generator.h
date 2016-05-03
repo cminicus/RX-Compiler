@@ -13,10 +13,13 @@
 #include <string>
 #include <map>
 
+#include <llvm/PassManager.h>
+#include <llvm/Transforms/Scalar.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Support/raw_ostream.h>
 
@@ -24,6 +27,7 @@ class LLVMGenerator {
 public:
     
     LLVMGenerator(AST &);
+//    ~LLVMGenerator
     std::string generate();
     
 private:
@@ -31,8 +35,11 @@ private:
     llvm::Module * module;
     llvm::LLVMContext Context;
     llvm::IRBuilder<> Builder;
+    llvm::legacy::PassManager * PM;
     
     std::map<Entry *, llvm::AllocaInst *> allocations;
+    
+    void initializePassManager();
     
     void generate_ast();
     

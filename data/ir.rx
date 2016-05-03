@@ -1,7 +1,8 @@
-var x = 0
-scan(x)
+var x = 9
+x = x + 12
 
-while x >= 0 {
-    print(x)
-    x = x - 1
+if x < 30 {
+    x = 10
 }
+
+print(x)
