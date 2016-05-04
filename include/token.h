@@ -20,11 +20,12 @@ enum token_kind {
     // types
     IDENTIFIER,
     INTEGER,
-    BOOLEAN,
     
     // keywords
     VAR,
     LET,
+    TRUE_TOK,
+    FALSE_TOK,
     IF,
     ELSE,
     WHILE,

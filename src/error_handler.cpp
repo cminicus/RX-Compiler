@@ -212,6 +212,11 @@ std::string ErrorHandler::incompatible_assignment(bool flag, Token token, Type *
     return s;
 }
 
+std::string ErrorHandler::test_error(bool flag) {
+    push_error(flag, "test", -1, -1);
+    return "test";
+}
+
 // -------------------------------- Utility ------------------------------------
 
 void ErrorHandler::push_error(bool flag, std::string error, int line, int col) {

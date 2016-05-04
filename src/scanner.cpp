@@ -167,9 +167,9 @@ bool Scanner::is_symbol(char c) {
  */
 bool Scanner::is_keyword(std::string s) {
     return
-    s == "var" || s == "let" || s == "if" ||
-    s == "else" || s == "while" || s == "print" ||
-    s == "scan";
+    s == "var" || s == "let" || s == "true" ||
+    s == "false" || s == "if" || s == "else" ||
+    s == "while" || s == "print" || s == "scan";
 }
 
 /**
@@ -243,6 +243,12 @@ Token Scanner::handle_keyword(Token t, std::string s) {
         t.kind = VAR;
     } else if (s == "let") {
         t.kind = LET;
+    } else if (s == "true") {
+        t.kind = TRUE_TOK;
+        t.value = 1;
+    } else if (s == "false") {
+        t.kind = FALSE_TOK;
+        t.value = 0;
     } else if (s == "if") {
         t.kind = IF;
     } else if (s == "else") {

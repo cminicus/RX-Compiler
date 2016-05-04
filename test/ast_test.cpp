@@ -12,10 +12,6 @@
 
 TEST_CASE("AST tree is properly built and destroyed") {
     
-    // create condition
-    ConditionNode * condition = new ConditionNode;
-    condition->operation = LESS_THAN;
-    
     // create number node (left side)
     Constant * c = new Constant;
     c->type = new Integer(32);
@@ -37,9 +33,8 @@ TEST_CASE("AST tree is properly built and destroyed") {
     // create binary node (right side)
     BinaryNode * binary = new BinaryNode(PLUS, left, right);
     
-    // hook up condition node
-    condition->left = number;
-    condition->right = binary;
+    // Create condition node
+    BinaryNode * condition = new BinaryNode(LESS_THAN, number, binary);
     
     // create if node
     IfNode * if_node = new IfNode;
@@ -72,6 +67,19 @@ TEST_CASE("parser with AST parses correctly") {
      Currently the AST adds no "positive" test cases since we only have
      one type. Once there are more types, we will be able to add tests here
     */
+    
+    SECTION("type inference parse correctly") {
+        ast_correctness_test_helper("var x = true; x = false");
+        ast_correctness_test_helper("var x = 1 < 2; x = true");
+    }
+    
+    SECTION("boolean operators parse correctly") {
+        ast_correctness_test_helper("var x = true == false");
+        ast_correctness_test_helper("var x = false != true");
+        
+//        ast_correctness_test_helper("var x = true || false");
+//        ast_correctness_test_helper("var x = false && true");
+    }
 }
 
 void ast_exception_test_helper(std::string program) {
@@ -91,14 +99,32 @@ TEST_CASE("parser with AST throws correctly") {
     }
     
     SECTION("illegal operation for type throws correctly") {
+        ast_exception_test_helper("var x = true < false");
+        ast_exception_test_helper("var x = false <= true");
+        ast_exception_test_helper("var x = true > false");
+        ast_exception_test_helper("var x = false >= true");
         
+//        ast_exception_test_helper("var x = 1 && 2");
+//        ast_exception_test_helper("var x = 3 || 6");
     }
     
     SECTION("operation type mismatch throws correctly") {
+        ast_exception_test_helper("var x = 1 + true");
+        ast_exception_test_helper("var x = false - 1");
+        ast_exception_test_helper("var x = 1 * false");
+        ast_exception_test_helper("var x = true / 1");
+        ast_exception_test_helper("var x = 1 % false");
+        ast_exception_test_helper("var x = -false");
+        ast_exception_test_helper("var x = -true");
         
+////        ast_exception_test_helper("var x = !1");
+////        ast_exception_test_helper("var x = false || 1");
+////        ast_exception_test_helper("var x = false && 0");
     }
-    
+
     SECTION("incompatible assignment throws correctly") {
-        
+        ast_exception_test_helper("var x = true; x = 19");
+        ast_exception_test_helper("var x = -19; x = false");
+        ast_exception_test_helper("var x = 3 > 2; x = 3");
     }
 }

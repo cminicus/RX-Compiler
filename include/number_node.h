@@ -12,6 +12,7 @@
 #include "expression_node.h"
 #include "constant.h"
 
+// Represents a boolean literal
 class NumberNode: public ExpressionNode {
 public:
     NumberNode(Constant * c) : constant(c) { this->type = c->type; }

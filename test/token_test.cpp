@@ -52,6 +52,16 @@ TEST_CASE("tokens initialize correctly", "[token]") {
         REQUIRE(t.to_string() == "let@(0:10)");
     }
     
+    SECTION("true token prints correctly") {
+        t.kind = TRUE_TOK;
+        REQUIRE(t.to_string() == "true@(0:10)");
+    }
+    
+    SECTION("false token prints correctly") {
+        t.kind = FALSE_TOK;
+        REQUIRE(t.to_string() == "false@(0:10)");
+    }
+    
     SECTION("if token prints correctly") {
         t.kind = IF;
         REQUIRE(t.to_string() == "if@(0:10)");

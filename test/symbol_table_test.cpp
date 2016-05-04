@@ -115,8 +115,6 @@ TEST_CASE("parser with symbol table parses correctly") {
         symbol_correctness_test_helper("while 2 < 4 { let x = 4 }; let x = 6");
     }
     
-    
-    
     SECTION("print statements are parsed correctly") {
         symbol_correctness_test_helper("let x = 4; print(x)");
     }
@@ -141,6 +139,10 @@ TEST_CASE("parser with symbol table throws correctly") {
     
     SECTION("duplicated identifiers throw correctly") {
         symbol_exception_test_helper("let x = 4; let x = 6");
+    }
+    
+    SECTION("using a reserved word throws correctly") {
+        symbol_exception_test_helper("let true = 4");
     }
     
     SECTION("print statements throw correctly") {

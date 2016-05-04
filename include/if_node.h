@@ -32,8 +32,7 @@ public:
     }
     instruction_kind get_instruction_kind() { return IF_INSTRUCTION; }
     
-    std::vector<ConditionNode *> conditions;
-//    std::vector<InstructionNode *> instructions;
+    std::vector<ExpressionNode *> conditions;
     std::vector<BlockNode *> blocks;
 };
 

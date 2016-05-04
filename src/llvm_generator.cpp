@@ -40,7 +40,7 @@ std::string LLVMGenerator::generate() {
     generate_ast();
     
     llvm::verifyModule(*module);
-//    PM->run(*module);
+    PM->run(*module);
     
     std::string output;
     llvm::raw_string_ostream output_stream(output);
@@ -136,7 +136,10 @@ void LLVMGenerator::generate_if(IfNode * node) {
         
         // generate condition if it exists
         if (i < (int) node->conditions.size()) {
-            llvm::Value * condition = generate_condition(node->conditions[i]);
+            llvm::Value * condition = generate_expression(node->conditions[i]);
+            
+            // only converts if needed
+            convert_boolean_to_comparison(&condition, node->conditions[i]);
             
             // create conditional branch
             Builder.CreateCondBr(condition, true_block, condition_blocks[i + 1]);
@@ -167,8 +170,12 @@ void LLVMGenerator::generate_while(WhileNode * node) {
     llvm::BasicBlock * loop = llvm::BasicBlock::Create(Context, "while_loop");
     llvm::BasicBlock * end = llvm::BasicBlock::Create(Context, "while_loop_end");
     
-    // generate condition
-    llvm::Value * condition = generate_condition(node->condition);
+    // generate condition (the expression is guaranteed to be a boolean expression)
+    llvm::Value * condition = generate_expression(node->condition);
+    
+    // only converts if needed
+    convert_boolean_to_comparison(&condition, node->condition);
+    
     // create initial branch
     Builder.CreateCondBr(condition, loop, end);
     
@@ -179,7 +186,11 @@ void LLVMGenerator::generate_while(WhileNode * node) {
     generate_block(node->block);
     
     // generate condition again
-    llvm::Value * next_condition = generate_condition(node->condition);
+    llvm::Value * next_condition = generate_expression(node->condition);
+    
+    // only converts if needed
+    convert_boolean_to_comparison(&next_condition, node->condition);
+    
     // create next branch
     Builder.CreateCondBr(next_condition, loop, end);
     
@@ -227,7 +238,7 @@ void LLVMGenerator::generate_print(PrintNode * node) {
         _printf->setCallingConv(llvm::CallingConv::C);
     }
     
-    // FIXME: Why doesn't this work?
+    // FIXME: Why doesn't the global variable stay in the module?
     llvm::GlobalVariable * int_format = module->getGlobalVariable("printf_int_format");
     if (!int_format) {
         llvm::Constant * int_string = llvm::ConstantDataArray::getString(Context, "%d\x0A");
@@ -260,7 +271,7 @@ void LLVMGenerator::generate_scan(ScanNode * node) {
         _scanf->setCallingConv(llvm::CallingConv::C);
     }
     
-    // FIXME: Why doesn't this work?
+    // FIXME: Why doesn't the global variable stay in the module?
     llvm::GlobalVariable * int_format = module->getGlobalVariable("scanf_int_format");
     if (!int_format) {
         llvm::Constant * int_string = llvm::ConstantDataArray::getString(Context, "%d");
@@ -279,31 +290,6 @@ void LLVMGenerator::generate_scan(ScanNode * node) {
     Builder.CreateCall(_scanf, actuals);
 }
 
-// -------------------------------- Conditions ---------------------------------
-
-llvm::Value * LLVMGenerator::generate_condition(ConditionNode * node) {
-    llvm::Value * left = generate_expression(node->left);
-    llvm::Value * right = generate_expression(node->right);
-    
-    if (node->left->get_expression_kind() == LOCATION_EXPRESSION) {
-        left = Builder.CreateLoad(left);
-    }
-    
-    if (node->right->get_expression_kind() == LOCATION_EXPRESSION) {
-        right = Builder.CreateLoad(right);
-    }
-    
-    switch (node->operation) {
-        case EQUALS:              return Builder.CreateICmpEQ (left, right, "==");
-        case NOT_EQUALS:          return Builder.CreateICmpNE (left, right, "!=");
-        case LESS_THAN:           return Builder.CreateICmpSLT(left, right, "<" );
-        case LESS_THAN_EQUALS:    return Builder.CreateICmpSLE(left, right, "<=");
-        case GREATER_THAN:        return Builder.CreateICmpSGT(left, right, ">" );
-        case GREATER_THAN_EQUALS: return Builder.CreateICmpSGE(left, right, ">=");
-        default:                  return nullptr;
-    }
-}
-
 // ---------------------------------- Blocks -----------------------------------
 
 void LLVMGenerator::generate_block(BlockNode * node) {
@@ -315,6 +301,7 @@ void LLVMGenerator::generate_block(BlockNode * node) {
 llvm::Value * LLVMGenerator::generate_expression(ExpressionNode * node) {
     switch (node->get_expression_kind()) {
         case NUMBER_EXPRESSION:   return generate_number  (dynamic_cast<NumberNode *>(node));   break;
+        case BOOLEAN_EXPRESSION:  return generate_boolean (dynamic_cast<BooleanNode *>(node));  break;
         case BINARY_EXPRESSION:   return generate_binary  (dynamic_cast<BinaryNode *>(node));   break;
         case LOCATION_EXPRESSION: return generate_location(dynamic_cast<LocationNode *>(node)); break;
     }
@@ -328,11 +315,19 @@ llvm::Value * LLVMGenerator::generate_number(NumberNode * node) {
     return llvm::ConstantInt::get(module->getContext(), value);
 }
 
+llvm::Value * LLVMGenerator::generate_boolean(BooleanNode * node) {
+    // create value (constant will have 1 for true and 0 for false
+    llvm::APInt value = llvm::APInt(8, node->constant->value, true);
+    
+    // return integer
+    return llvm::ConstantInt::get(module->getContext(), value);
+}
+
 llvm::Value * LLVMGenerator::generate_binary(BinaryNode * node) {
     llvm::Value * left = generate_expression(node->left);
     llvm::Value * right = generate_expression(node->right);
     
-    
+    // load if needed
     if (node->left->get_expression_kind() == LOCATION_EXPRESSION) {
         left = Builder.CreateLoad(left);
     }
@@ -342,12 +337,21 @@ llvm::Value * LLVMGenerator::generate_binary(BinaryNode * node) {
     }
     
     switch (node->operation) {
-        case PLUS:     return Builder.CreateAdd (left, right, "add");
-        case MINUS:    return Builder.CreateSub (left, right, "sub");
-        case MULTIPLY: return Builder.CreateMul (left, right, "mul");
-        case DIVIDE:   return Builder.CreateSDiv(left, right, "div");
-        case MODULO:   return Builder.CreateSRem(left, right, "mod");
-        default:       return nullptr;
+        // numerical operators
+        case PLUS:                return Builder.CreateAdd (left, right, "add");
+        case MINUS:               return Builder.CreateSub (left, right, "sub");
+        case MULTIPLY:            return Builder.CreateMul (left, right, "mul");
+        case DIVIDE:              return Builder.CreateSDiv(left, right, "div");
+        case MODULO:              return Builder.CreateSRem(left, right, "mod");
+            
+        // logical operators
+        case EQUALS:              return Builder.CreateICmpEQ (left, right, "==");
+        case NOT_EQUALS:          return Builder.CreateICmpNE (left, right, "!=");
+        case LESS_THAN:           return Builder.CreateICmpSLT(left, right, "<" );
+        case LESS_THAN_EQUALS:    return Builder.CreateICmpSLE(left, right, "<=");
+        case GREATER_THAN:        return Builder.CreateICmpSGT(left, right, ">" );
+        case GREATER_THAN_EQUALS: return Builder.CreateICmpSGE(left, right, ">=");
+        default:                  return nullptr;
     }
 }
 
@@ -363,7 +367,7 @@ llvm::Value * LLVMGenerator::generate_variable(VariableNode * node) {
     // check if allocation exists
     if (!allocations[node->variable]) {
         // create/save allocation if not
-        allocations[node->variable] = Builder.CreateAlloca(llvm::IntegerType::get(module->getContext(), 32));
+        allocations[node->variable] = Builder.CreateAlloca(get_llvm_type(node->type));
     }
     
     return allocations[node->variable];
@@ -374,8 +378,48 @@ llvm::Value * LLVMGenerator::generate_constant(ConstantNode * node) {
     // check if allocation exists
     if (!allocations[node->constant]) {
         // create/save allocation if not
-        allocations[node->constant] = Builder.CreateAlloca(llvm::IntegerType::get(module->getContext(), 32));
+        allocations[node->constant] = Builder.CreateAlloca(get_llvm_type(node->type));
     }
     
     return allocations[node->constant];
 }
+
+llvm::Type * LLVMGenerator::get_llvm_type(Type * t) {
+    
+    if (t->get_type_kind() == INTEGER_TYPE) {
+        // for now
+        Integer * type = dynamic_cast<Integer *>(t);
+        return llvm::IntegerType::get(module->getContext(), type->get_num_bits());
+    }
+    
+    if (t->get_type_kind() == BOOLEAN_TYPE) {
+        return llvm::IntegerType::get(module->getContext(), 8);
+    }
+    
+    return nullptr;
+}
+
+// assumes the expression is a boolean literal, or it's a variable representing a boolean
+// takes in a pointer to a pointer so it can choose to not alter it if this is not a literal/variable
+void LLVMGenerator::convert_boolean_to_comparison(llvm::Value ** condition, ExpressionNode * node) {
+
+    // if it's either a variable of boolean type, or a boolean literal (boolean_expression), alter the pointers
+    if ((node->type->get_type_kind() == BOOLEAN_TYPE && node->get_expression_kind() == LOCATION_EXPRESSION) ||
+        node->get_expression_kind() == BOOLEAN_EXPRESSION) {
+        
+        // variable holding a boolean value
+        if (node->get_expression_kind() == LOCATION_EXPRESSION) {
+            *condition = Builder.CreateLoad(*condition);
+        }
+        
+        llvm::IntegerType * bool_type = llvm::IntegerType::get(module->getContext(), 8);
+        llvm::ConstantInt * one = llvm::ConstantInt::get(bool_type, 1);
+        *condition = Builder.CreateICmpEQ(*condition, one);
+    }
+}
+
+//llvm::Value * LLVMGenerator::convert_boolean_to_comparison(llvm::Value * condition) {
+//    llvm::IntegerType * bool_type = llvm::IntegerType::get(module->getContext(), 8);
+//    llvm::ConstantInt * one = llvm::ConstantInt::get(bool_type, 1);
+//    return Builder.CreateICmpEQ(condition, one);
+//}

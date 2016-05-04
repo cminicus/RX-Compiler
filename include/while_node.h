@@ -19,8 +19,7 @@ public:
     ~WhileNode() { delete condition; delete block; }
     instruction_kind get_instruction_kind() { return WHILE_INSTRUCTION; }
     
-    ConditionNode * condition;
-//    InstructionNode * instructions;
+    ExpressionNode * condition;
     BlockNode * block;
 };
 

@@ -78,6 +78,7 @@ std::string RXCompiler::compile() {
             Parser parser(scanner, &symbol_table, &ast);
             parser.parse();
             
+            
             LLVMGenerator generator(ast);
             
             // generate code

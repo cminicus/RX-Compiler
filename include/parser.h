@@ -40,17 +40,30 @@ private:
         IF, WHILE, IDENTIFIER, PRINT, SCAN, VAR, LET
     };
     
-    std::vector<token_kind> conditions = {
+    std::vector<token_kind> RelOps = {
         EQUALS, NOT_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
         GREATER_THAN, GREATER_THAN_EQUALS
     };
     
-    std::vector<token_kind> term_operations = {
+    std::vector<token_kind> AddOps = {
         PLUS, MINUS
     };
     
-    std::vector<token_kind> factor_operations = {
+    std::vector<token_kind> MulOps = {
         MULTIPLY, DIVIDE, MODULO
+    };
+    
+    // these are operators that ONLY numbers can use
+    std::vector<token_kind> NumberOps = {
+        LESS_THAN, LESS_THAN_EQUALS,
+        GREATER_THAN, GREATER_THAN_EQUALS,
+        PLUS, MINUS,
+        MULTIPLY, DIVIDE, MODULO
+    };
+    
+    // these are operators that ONLY booleans can use
+    std::vector<token_kind> BooleanOps = {
+        
     };
     
     // Utilities
@@ -70,10 +83,13 @@ private:
     
     // AST Functions
     void set_ast_root(Node *);
+    void check_operator_typing(Token, ExpressionNode * left, ExpressionNode * right);
     
     // Entry Functions
     Variable * create_variable_entry(token_match, Type *);
     Constant * create_constant_entry(token_match, Type *);
+    
+    
     
     // Grammar Functions
     void Statements();
@@ -83,7 +99,7 @@ private:
     DeclarationNode * ConstantDeclaration();
     
     ExpressionNode * Expression();
-//    ExpressionNode * SimpleExpression();
+    ExpressionNode * SimpleExpression();
     ExpressionNode * Term();
     ExpressionNode * Factor();
     
@@ -96,7 +112,6 @@ private:
     ScanNode * Scan();
     
     BlockNode * Block();
-    ConditionNode * Condition();
 };
 
 #endif /* parser_h */

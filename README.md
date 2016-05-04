@@ -112,7 +112,7 @@ scan(x)
 **Not sure when...**
 
 - Unary Operators
-- The rest of the major Binary Operators
+- The rest of the major Binary Operators (++ -- ^ | &)
 - Custom binary/unary operators/switch to precedence system
 - Optionals (if let, ?, ??, etc)
 - Closures

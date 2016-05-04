@@ -14,6 +14,7 @@
 
 enum expression_kind {
     NUMBER_EXPRESSION,
+    BOOLEAN_EXPRESSION,
     BINARY_EXPRESSION,
     LOCATION_EXPRESSION
 };

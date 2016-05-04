@@ -18,6 +18,7 @@
 #include "scan_node.h"
 #include "declaration_node.h"
 #include "number_node.h"
+#include "boolean_node.h"
 #include "binary_node.h"
 #include "variable_node.h"
 #include "constant_node.h"

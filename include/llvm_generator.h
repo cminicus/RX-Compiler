@@ -43,7 +43,6 @@ private:
     
     void generate_ast();
     
-    llvm::Value * generate_condition(ConditionNode *);
     void generate_block(BlockNode *);
     
     void generate_instruction(InstructionNode *);
@@ -56,10 +55,15 @@ private:
     
     llvm::Value * generate_expression(ExpressionNode *);
     llvm::Value * generate_number(NumberNode *);
+    llvm::Value * generate_boolean(BooleanNode *);
     llvm::Value * generate_binary(BinaryNode *);
     llvm::Value * generate_location(LocationNode *);
     llvm::Value * generate_variable(VariableNode *);
     llvm::Value * generate_constant(ConstantNode *);
+    
+    // utility functions
+    llvm::Type * get_llvm_type(Type *);
+    void convert_boolean_to_comparison(llvm::Value **, ExpressionNode *);
 };
 
 #endif /* llvm_generator_h */

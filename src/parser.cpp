@@ -244,6 +244,30 @@ void Parser::set_ast_root(Node *root) {
     }
 }
 
+void Parser::check_operator_typing(Token operation_token, ExpressionNode * left, ExpressionNode * right) {
+    
+    // type mismatch
+    if (*(left->type) != *(right->type)) {
+        ErrorHandler::operation_type_mismatch(false, operation_token, left->type, right->type);
+    }
+    
+    // if this is a number operator and we are not using a number -> error
+    if (std::find(NumberOps.begin(), NumberOps.end(), operation_token.kind) != NumberOps.end() &&
+        (left->type->get_type_kind() != INTEGER_TYPE || right->type->get_type_kind() != INTEGER_TYPE)) {
+        
+        // TODO: cannot use operation ___ with non-integer types
+        ErrorHandler::test_error(false);
+    }
+    
+    // if this is a boolean operator and we are not using a boolean -> error
+    if (std::find(BooleanOps.begin(), BooleanOps.end(), operation_token.kind) != BooleanOps.end() &&
+        (left->type->get_type_kind() != BOOLEAN_TYPE || right->type->get_type_kind() != BOOLEAN_TYPE)) {
+        
+        // TODO: cannot use operation ___ with non-boolean types
+        ErrorHandler::test_error(false);
+    }
+}
+
 #pragma mark - Entry
 // ------------------------------ Entry Functions ------------------------------
 
@@ -428,56 +452,66 @@ DeclarationNode * Parser::ConstantDeclaration() {
 }
 
 /**
- *  Expression = [“+” | “-“] Term {(“+” | “-“) Term}
+ *  Expression = SimpleExpression [RelOp SimpleExpression]
  */
 ExpressionNode * Parser::Expression() {
-    // not that there is currently no numeric collapsing in the expression
     
-    // probably isn't right
+    ExpressionNode * left = SimpleExpression();
+    
+    if (optional_match(RelOps)) {
+        
+        Token operation_token = last;
+        ExpressionNode * right = SimpleExpression();
+        
+        if (!no_ast) {
+            
+            // check for mismatch typing and illegal types for operators (including RelOps)
+            check_operator_typing(operation_token, left, right);
+            
+            left = new BinaryNode(operation_token.kind, left, right);
+            left->type = new Boolean;
+        }
+    }
+    
+    return left;
+}
+
+/**
+ *  SimpleExpression = [“+” | “-“] Term {AddOp Term}
+ */
+ExpressionNode * Parser::SimpleExpression() {
     optional_match({PLUS, MINUS});
     
-    Token operation_token = last;
-    bool negate = operation_token.kind == MINUS;
+    bool negate = last.kind == MINUS;
     
     ExpressionNode * root = Term();
     
-    bool illegal_type = !no_ast && root != nullptr && root->type->get_type_kind() != INTEGER_TYPE;
-
     // negate the first term
     if (!no_ast && negate) {
+        
+        if (root->type->get_type_kind() != INTEGER_TYPE) {
+            // TODO: cannot negate non-integer type
+            ErrorHandler::test_error(false);
+        }
+        
         Constant * c = new Constant;
         c->value = 0;
         c->type = new Integer(32);
         
         NumberNode * zero = new NumberNode(c);
-        BinaryNode * binary = new BinaryNode(MINUS, zero, root); // operation, left, right
-        
-        root = binary;
+        root = new BinaryNode(MINUS, zero, root); // operation, left, right
     }
     
-    while (optional_match({PLUS, MINUS})) {
+    while (optional_match(AddOps)) {
+        
         Token operation_token = last;
-        
-        if (illegal_type) {
-            ErrorHandler::illegal_operation_for_type(false, operation_token, root->type);
-            illegal_type = false;
-        }
-        
         ExpressionNode * term = Term();
         
         if (!no_ast) {
-            if (term->type->get_type_kind() != INTEGER_TYPE) {
-                ErrorHandler::illegal_operation_for_type(false, operation_token, term->type);
-            }
             
-            // have to derference pointers to check for equality
-            if (*(term->type) != *(root->type)) {
-                ErrorHandler::operation_type_mismatch(false, operation_token, term->type, root->type);
-            }
-            
-            BinaryNode * binary = new BinaryNode(operation_token.kind, root, term); // operation, left, right
-            
-            root = binary;
+            // check for mismatch typing and illegal types for operators
+            check_operator_typing(operation_token, root, term);
+            root = new BinaryNode(operation_token.kind, root, term); // operation, left, right
         }
     }
     
@@ -485,37 +519,22 @@ ExpressionNode * Parser::Expression() {
 }
 
 /**
- *  Term = Factor {(“*” | “/“ | “%”) Factor}
+ *  Term = Factor {MulOp Factor}
  */
 ExpressionNode * Parser::Term() {
     
     ExpressionNode * root = Factor();
-    
-    // we flag an error but don't know the specific operation yet
-    bool illegal_type = !no_ast && root != nullptr && root->type->get_type_kind() != INTEGER_TYPE;
-    
-    while (optional_match({MULTIPLY, DIVIDE, MODULO})) {
+
+    while (optional_match(MulOps)) {
+        
         Token operation_token = last;
-        
-        if (illegal_type) {
-            ErrorHandler::illegal_operation_for_type(false, operation_token, root->type);
-            illegal_type = false;
-        }
-        
         ExpressionNode * factor = Factor();
         
         if (!no_ast) {
-            if (factor->type->get_type_kind() != INTEGER_TYPE) {
-                ErrorHandler::illegal_operation_for_type(false, operation_token, factor->type);
-            }
             
-            if (*(factor->type) != *(root->type)) {
-                ErrorHandler::operation_type_mismatch(false, operation_token, factor->type, root->type);
-            }
-            
-            BinaryNode * binary = new BinaryNode(operation_token.kind, root, factor); // operation, left, right;
-            
-            root = binary;
+            // check for mismatch typing and illegal types for operators
+            check_operator_typing(operation_token, root, factor);
+            root = new BinaryNode(operation_token.kind, root, factor); // operation, left, right;
         }
     }
 
@@ -523,7 +542,7 @@ ExpressionNode * Parser::Term() {
 }
 
 /**
- *  Factor = integer | identifier | “(“ Expression “)”
+ *  Factor = integer | boolean | identifier | “(“ Expression “)”
  */
 ExpressionNode * Parser::Factor() {
     
@@ -540,6 +559,20 @@ ExpressionNode * Parser::Factor() {
         NumberNode * number_node = new NumberNode(c);
         
         return number_node;
+        
+    } else if (check({TRUE_TOK, FALSE_TOK})) {
+        
+        token_match m = match({TRUE_TOK, FALSE_TOK});
+        
+        // leave if no ast
+        if (no_ast) {
+            return nullptr;
+        }
+        
+        Constant * c = new Constant(m.token, new Boolean);
+        BooleanNode * boolean_node = new BooleanNode(c);
+        
+        return boolean_node;
         
     } else if (check({IDENTIFIER})) {
         
@@ -619,13 +652,14 @@ InstructionNode * Parser::Instructions() {
         // and it comes out here expecting a new_line or semi_colon
         // but there is a "let" -> if close_curly beforehand then maybe
         
-        match({NEW_LINE, SEMI_COLON});
+        while (optional_match({NEW_LINE, SEMI_COLON})); // TODO: this was changed to while optional_match, that okay??
     }
+    
     return instructions;
 }
 
 /**
- *  Instruction = If | While | Assign | Print | Declaration
+ *  Instruction = If | While | Assign | Print | Scan | Declaration
  */
 InstructionNode * Parser::Instruction() {
     
@@ -659,16 +693,21 @@ InstructionNode * Parser::Instruction() {
 }
 
 /**
- *  If = “if” Condition “{“ [Instructions] “}” {“else” “if” Condition “{“ [Instructions] “}”}
- *  [“else” “{“ [Instructions] “}”]
+ *  If = “if” Expression Block {“else” “if” Expression Block} [“else” Block]
  */
 IfNode * Parser::If() {
     IfNode * if_node = new IfNode;
     
     match(IF);
     
-    ConditionNode * c = Condition();
-    if_node->conditions.push_back(c);
+    ExpressionNode * e = Expression();
+    
+    if (e != nullptr && e->type->get_type_kind() != BOOLEAN_TYPE) {
+        // TODO: expression in if statement must have a boolean type
+        ErrorHandler::test_error(false);
+    }
+    
+    if_node->conditions.push_back(e);
     
     
     BlockNode * block = Block();
@@ -681,8 +720,14 @@ elseif:
         // else if clause
         if (optional_match({IF})) {
             
-            ConditionNode * c = Condition();
-            if_node->conditions.push_back(c);
+            ExpressionNode * e = Expression();
+            
+            if (e != nullptr && e->type->get_type_kind() != BOOLEAN_TYPE) {
+                // TODO: expression in if statement must have a boolean type
+                ErrorHandler::test_error(false);
+            }
+            
+            if_node->conditions.push_back(e);
             
             BlockNode * block = Block();
             if_node->blocks.push_back(block);
@@ -706,13 +751,19 @@ elseif:
 }
 
 /**
- *  While = “while” Condition “{“ [Instructions] “}”
+ *  While = “while” Expression Block
  */
 WhileNode * Parser::While() {
     WhileNode * while_node = new WhileNode;
     
     match(WHILE);
-    while_node->condition = Condition();
+    while_node->condition = Expression();
+    
+    if (while_node->condition != nullptr && while_node->condition->type->get_type_kind() != BOOLEAN_TYPE) {
+        // TODO: expression in while statement must have a boolean type
+        ErrorHandler::test_error(false);
+    }
+    
     while_node->block = Block();
     
     if (no_ast) {
@@ -787,6 +838,10 @@ PrintNode * Parser::Print() {
     return print_node;
 }
 
+
+/**
+ *  Scan = “scan” “(“ identifier “)”
+ */
 ScanNode * Parser::Scan() {
     
     match(SCAN);
@@ -827,6 +882,9 @@ ScanNode * Parser::Scan() {
     return scan_node;
 }
 
+/**
+ *  Block = “{“ [Instructions] “}”
+ */
 BlockNode * Parser::Block() {
     BlockNode * block = new BlockNode;
     
@@ -849,13 +907,13 @@ BlockNode * Parser::Block() {
 /**
  *  Condition = Expression (“==“ | “!=“ | “<“ | “<=“ | “>” | “>=“) Expression
  */
-ConditionNode * Parser::Condition() {
-    
-    ConditionNode *condition = new ConditionNode;
-    condition->left = Expression();
-    // maybe change into checks and if not, send a custom error "missing condition"
-    condition->operation = match(this->conditions).token.kind;
-    condition->right = Expression();
-    
-    return condition;
-}
+//ConditionNode * Parser::Condition() {
+//    
+//    ConditionNode *condition = new ConditionNode;
+//    condition->left = Expression();
+//    // maybe change into checks and if not, send a custom error "missing condition"
+//    condition->operation = match(this->conditions).token.kind;
+//    condition->right = Expression();
+//    
+//    return condition;
+//}

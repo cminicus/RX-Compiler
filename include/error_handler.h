@@ -39,6 +39,8 @@ public:
     static std::string operation_type_mismatch(bool, Token, Type *, Type *);
     static std::string incompatible_assignment(bool, Token, Type *);
     
+    static std::string test_error(bool);
+    
     static void throw_errors();
     
 private:

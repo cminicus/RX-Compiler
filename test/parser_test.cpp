@@ -189,6 +189,19 @@ TEST_CASE("parser parses correctly", "[parser]") {
     SECTION("scan statements parse correctly") {
         parser_correctness_test_helper("scan(x)");
     }
+    
+    // ---------------------------- Booleans -----------------------------------
+    
+    SECTION("boolean statements parse correctly") {
+        parser_correctness_test_helper("let x = true; let y = false");
+    }
+    
+    SECTION("boolean statements used as conditions parse correctly") {
+        parser_correctness_test_helper("if true { print(2) }");
+        parser_correctness_test_helper("let x = true; if x { print(x) }");
+    }
+    
+    // TODO: add more stuff with true || false once those are added etc
 }
 
 void parser_exception_test_helper(std::string program) {
@@ -199,10 +212,9 @@ void parser_exception_test_helper(std::string program) {
 
 TEST_CASE("parser throws correctly for variable declarations") {
     
-    // technically valid -> this is an assignment (but for an undeclared variable in this case)
-//    SECTION("missing 'var'") {
-//        parser_exception_test_helper("x = 4");
-//    }
+    SECTION("using a reserved word") {
+        parser_exception_test_helper("var false = 4");
+    }
     
     SECTION("missing identifier") {
         parser_exception_test_helper("var = 4");
@@ -223,19 +235,13 @@ TEST_CASE("parser throws correctly for variable declarations") {
     SECTION("incorrect assign operator") {
         parser_exception_test_helper("var x < 4");
     }
-    
-    // also technically valid -> assignment from another variable
-//    SECTION("not using an expression") {
-//        parser_exception_test_helper("var x = hello");
-//    }
 }
 
 TEST_CASE("parser throws correctly for constant declarations") {
     
-    // technically valid -> this is an assignment (but for an undeclared variable in this case)
-//    SECTION("missing 'let'") {
-//        parser_exception_test_helper("x = 4");
-//    }
+    SECTION("using a reserved word") {
+        parser_exception_test_helper("let true = 4");
+    }
     
     SECTION("missing identifier") {
         parser_exception_test_helper("let = 4");
@@ -256,11 +262,10 @@ TEST_CASE("parser throws correctly for constant declarations") {
     SECTION("incorrect assign operator") {
         parser_exception_test_helper("let x < 4");
     }
-    
-    // also technically valid -> assignment from another variable
-//    SECTION("not using an expression") {
-//        parser_exception_test_helper("let x = goodbye");
-//    }
+
+    SECTION("not using an expression") {
+        parser_exception_test_helper("let x = if");
+    }
 }
 
 TEST_CASE("parser throws correctly for expressions") {

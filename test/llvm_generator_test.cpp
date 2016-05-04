@@ -41,6 +41,12 @@ TEST_CASE("print blocks generate correct code") {
     SECTION("print generates constant values correctly") {
         std::string program = "print(4)";
         code_generator_test_helper(program, "4\n");
+        
+        program = "print(true)";
+        code_generator_test_helper(program, "1\n");
+        
+        program = "print(false)";
+        code_generator_test_helper(program, "0\n");
     }
     
     SECTION("print generates negative constant values correctly") {
@@ -399,6 +405,41 @@ TEST_CASE("comparison blocks generate correct code") {
         program = "let x = 1; if 0 >= x { print(1) }";
         code_generator_test_helper(program, "");
     }
+}
+
+#pragma mark Boolean Blocks
+
+TEST_CASE("booleans generate correct code") {
+    
+    SECTION("booleans in control statements generate correctly") {
+        std::string program = "if true { print(1) }";
+        code_generator_test_helper(program, "1\n");
+        
+        program = "if false { print(1) }";
+        code_generator_test_helper(program, "");
+        
+        program = "let x = true; if x { print(1) }";
+        code_generator_test_helper(program, "1\n");
+        
+        program = "let x = false; if x { print(1) }";
+        code_generator_test_helper(program, "");
+    }
+    
+    SECTION("boolean equality in control statements generates correctly") {
+        std::string program = "if true == true { print(1) }";
+        code_generator_test_helper(program, "1\n");
+        
+        program = "if true != true { print(1) }";
+        code_generator_test_helper(program, "");
+        
+        program = "let x = false; if x == false { print(1) }";
+        code_generator_test_helper(program, "1\n");
+        
+        program = "let x = false; if x != false { print(1) }";
+        code_generator_test_helper(program, "");
+    }
+    
+    // TODO true ==/!= true -> add this x == true, x != true
 }
 
 #pragma mark If Blocks

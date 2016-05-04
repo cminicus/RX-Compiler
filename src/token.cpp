@@ -12,6 +12,8 @@
 std::map<token_kind, std::string> Token::mapping = {
     {VAR, "var"},
     {LET, "let"},
+    {TRUE_TOK, "true"},
+    {FALSE_TOK, "false"},
     {IF, "if"},
     {ELSE, "else"},
     {WHILE, "while"},
@@ -57,9 +59,6 @@ std::string Token::to_string() {
         os << ":" << col_position << ")";
     } else if (kind == INTEGER) {
         os << "integer<" << value << ">@(" << line_position;
-        os << ":" << col_position << ")";
-    } else if (kind == BOOLEAN) {
-        os << "boolean<" << (value == 1 ? "true" : "false") << ">@(" << line_position;
         os << ":" << col_position << ")";
     } else {
         os << Token::mapping[kind] << "@(" << line_position;
