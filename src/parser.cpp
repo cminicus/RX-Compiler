@@ -447,9 +447,10 @@ ExpressionNode * Parser::Expression() {
     if (!no_ast && negate) {
         Constant * c = new Constant;
         c->value = 0;
+        c->type = new Integer(32);
         
         NumberNode * zero = new NumberNode(c);
-        BinaryNode * binary = new BinaryNode(last.kind, zero, root); // operation, left, right
+        BinaryNode * binary = new BinaryNode(MINUS, zero, root); // operation, left, right
         
         root = binary;
     }
@@ -469,7 +470,8 @@ ExpressionNode * Parser::Expression() {
                 ErrorHandler::illegal_operation_for_type(false, operation_token, term->type);
             }
             
-            if (term->type != root->type) {
+            // have to derference pointers to check for equality
+            if (*(term->type) != *(root->type)) {
                 ErrorHandler::operation_type_mismatch(false, operation_token, term->type, root->type);
             }
             
@@ -507,7 +509,7 @@ ExpressionNode * Parser::Term() {
                 ErrorHandler::illegal_operation_for_type(false, operation_token, factor->type);
             }
             
-            if (factor->type != root->type) {
+            if (*(factor->type) != *(root->type)) {
                 ErrorHandler::operation_type_mismatch(false, operation_token, factor->type, root->type);
             }
             
@@ -534,7 +536,7 @@ ExpressionNode * Parser::Factor() {
             return nullptr;
         }
         
-        Constant * c = new Constant(m.token, Integer::Instance());
+        Constant * c = new Constant(m.token, new Integer(32));
         NumberNode * number_node = new NumberNode(c);
         
         return number_node;
@@ -603,7 +605,7 @@ InstructionNode * Parser::Instructions() {
             instructions = Instruction();
             current_instruction = instructions;
         } else {
-            current_instruction->next = Instructions();
+            current_instruction->next = Instruction();
             current_instruction = current_instruction->next;
         }
         
@@ -755,7 +757,7 @@ AssignNode * Parser::Assign() {
     VariableNode * variable_node = new VariableNode(variable);
     
     // make sure types match
-    if (variable_node->type != assign_node->expression->type) {
+    if (*(variable_node->type) != *(assign_node->expression->type)) {
         ErrorHandler::incompatible_assignment(false, m.token, assign_node->expression->type);
     }
     

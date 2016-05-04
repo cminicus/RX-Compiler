@@ -14,15 +14,20 @@
 class Boolean: public Type {
 public:
     
-    static Boolean * Instance();
-    static void DeleteInstance();
+    Boolean() {}
     entry_kind get_entry_kind() { return TYPE_ENTRY; }
-    type_kind get_type_kind() { return BOOLEAN_TYPE; }
-    int get_type_size() { return 1; }
+    type_kind get_type_kind() const { return BOOLEAN_TYPE; }
     
-private:
-    Boolean();
-    static Boolean * s_instance;
+    bool operator==(const Type & rhs) const {
+        if (rhs.get_type_kind() == BOOLEAN_TYPE) {
+            return true;
+        }
+        return false;
+    }
+    
+    bool operator!=(const Type & rhs) const {
+        return !(*this == rhs);
+    }
 };
 
 #endif /* boolean_h */

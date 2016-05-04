@@ -19,7 +19,7 @@ class Constant: public Entry {
 public:
     Constant() : value(0), type(nullptr) { line_position = -1; col_position = -1; }
     Constant(Token, Type *);
-    ~Constant();
+//    ~Constant() { delete type; }
     entry_kind get_entry_kind() { return CONSTANT_ENTRY; };
     
     int value;

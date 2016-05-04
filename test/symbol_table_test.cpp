@@ -15,15 +15,15 @@ TEST_CASE("symbol table functions works correctly") {
     
     Constant *c = new Constant;
     c->value = 15;
-    c->type = Integer::Instance();
+    c->type = new Integer(32);
     
     Variable *v = new Variable;
     v->value = 20;
-    v->type = Integer::Instance();
+    v->type = new Integer(32);
     
     Constant *c2 = new Constant;
     c2->value = 25;
-    c2->type = Integer::Instance();
+    c2->type = new Integer(32);
     
     SECTION("symbol table insert, find, and local works") {
         s.insert("c", c);

@@ -27,6 +27,11 @@ TEST_CASE("parser parses correctly", "[parser]") {
         parser_correctness_test_helper("var x = 4");
     }
     
+    SECTION("signed variable declarations parse correctly") {
+        parser_correctness_test_helper("var x = -4");
+        parser_correctness_test_helper("var x = +4");
+    }
+    
     SECTION("complex variable declarations parse correctly") {
         // negative numbers have to be in parenthesis if in factor?
         // refactor negative numbers to be parse in scanner?

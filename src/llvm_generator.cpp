@@ -40,7 +40,7 @@ std::string LLVMGenerator::generate() {
     generate_ast();
     
     llvm::verifyModule(*module);
-    PM->run(*module);
+//    PM->run(*module);
     
     std::string output;
     llvm::raw_string_ostream output_stream(output);
@@ -52,6 +52,12 @@ std::string LLVMGenerator::generate() {
 
 void LLVMGenerator::generate_ast() {
     Node * root = ast.get_root();
+    
+    // casts for ints/floating points
+//    Builder.CreateUIToFP(<#llvm::Value *V#>, <#llvm::Type *DestTy#>)
+//    Builder.CreateSIToFP(<#llvm::Value *V#>, <#llvm::Type *DestTy#>)
+//    Builder.CreateFPToSI(<#llvm::Value *V#>, <#llvm::Type *DestTy#>)
+//    Builder.CreateFPToUI(<#llvm::Value *V#>, <#llvm::Type *DestTy#>)
     
     // for now, create main function and "entry" block
     llvm::FunctionType * main_type = llvm::FunctionType::get(llvm::IntegerType::get(Context, 32), false);

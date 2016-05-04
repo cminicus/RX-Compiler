@@ -43,6 +43,11 @@ TEST_CASE("print blocks generate correct code") {
         code_generator_test_helper(program, "4\n");
     }
     
+    SECTION("print generates negative constant values correctly") {
+        std::string program = "print(-4)";
+        code_generator_test_helper(program, "-4\n");
+    }
+    
     SECTION("print generates constant-offset variables correctly") {
         std::string program = "var y = 5 \n print(y)";
         code_generator_test_helper(program, "5\n");

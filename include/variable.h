@@ -19,7 +19,7 @@ class Variable: public Entry {
 public:
     Variable() : value(0), type(nullptr) { line_position = -1; col_position = -1; }
     Variable(Token, Type *);
-    ~Variable();
+//    ~Variable() { delete type; }
     entry_kind get_entry_kind() { return VARIABLE_ENTRY; };
     
     int value;
@@ -27,6 +27,5 @@ public:
     Type * type;
     std::string identifier;
 };
-
 
 #endif /* variable_h */

@@ -18,19 +18,19 @@ TEST_CASE("AST tree is properly built and destroyed") {
     
     // create number node (left side)
     Constant * c = new Constant;
-    c->type = Integer::Instance();
+    c->type = new Integer(32);
     c->value = 10;
     NumberNode * number = new NumberNode(c);
     
     // create left side of binary node
     Constant * c_left = new Constant;
-    c_left->type = Integer::Instance();
+    c_left->type = new Integer(32);
     c_left->value = 5;
     NumberNode * left = new NumberNode(c_left);
     
     // create right side of binary node
     Constant * c_right = new Constant;
-    c_right->type = Integer::Instance();
+    c_right->type = new Integer(32);
     c_right->value = 7;
     NumberNode * right = new NumberNode(c_right);
     

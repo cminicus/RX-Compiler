@@ -45,6 +45,14 @@ private:
         GREATER_THAN, GREATER_THAN_EQUALS
     };
     
+    std::vector<token_kind> term_operations = {
+        PLUS, MINUS
+    };
+    
+    std::vector<token_kind> factor_operations = {
+        MULTIPLY, DIVIDE, MODULO
+    };
+    
     // Utilities
     void next();
     token_match match(token_kind);
@@ -75,6 +83,7 @@ private:
     DeclarationNode * ConstantDeclaration();
     
     ExpressionNode * Expression();
+//    ExpressionNode * SimpleExpression();
     ExpressionNode * Term();
     ExpressionNode * Factor();
     

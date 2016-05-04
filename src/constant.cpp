@@ -17,9 +17,3 @@ Constant::Constant(Token token, Type * type) {
     this->type = type;
     identifier = token.identifier;
 }
-
-Constant::~Constant() {
-    if (type != nullptr && type->get_type_kind() != INTEGER_TYPE) {
-        delete type;
-    }
-}

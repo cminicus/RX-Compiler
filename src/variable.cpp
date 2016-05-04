@@ -17,9 +17,3 @@ Variable::Variable(Token token, Type * type) {
     this->type = type;
     identifier = token.identifier;
 }
-
-Variable::~Variable() {
-    if (type != nullptr && type->get_type_kind() != INTEGER_TYPE) {
-        delete type;
-    }
-}

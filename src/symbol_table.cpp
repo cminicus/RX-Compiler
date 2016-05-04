@@ -11,7 +11,8 @@
 
 SymbolTable::SymbolTable() {
     universe = new Scope;
-    universe->insert("int", Integer::Instance());
+    universe->insert("i32", new Integer(32));
+    universe->insert("bool", new Boolean);
     
     current_scope = new Scope;
     current_scope->outer = universe;
@@ -20,7 +21,6 @@ SymbolTable::SymbolTable() {
 SymbolTable::~SymbolTable() {
     delete universe;
     delete current_scope;
-    Integer::DeleteInstance();
 }
 
 Scope * SymbolTable::get_current_scope() {
