@@ -64,6 +64,7 @@ private:
     // utility functions
     llvm::Type * get_llvm_type(Type *);
     void convert_boolean_to_comparison(llvm::Value **, ExpressionNode *);
+    void store_comparison_in_boolean(llvm::CmpInst *, llvm::Value *);
 };
 
 #endif /* llvm_generator_h */

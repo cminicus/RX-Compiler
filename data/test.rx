@@ -13,7 +13,7 @@ if 1 < 2 {
 
 let x = Vector<i32>()
 for y in x {
-    print(y :: i16)
+    print(y as i16)
 }
 
 f32
@@ -22,17 +22,20 @@ bool
 
 fun guac = p: i32, q: i16 ==> p + (i32) q
 
+// closures? this would be weird on multiple lines without {}s
+// definitely scrap this
 let x = p: i32 ==> print(p)
 let x = p: i32 -> i32 ==> print(p); p
 
 
-let x :: i16 = function()
+let x: i16 = function()
 let x = function() as i16
 
-let x :: i1 = true
+let x: i1 = true
 
 let i = { 2 + 1 }
 
+// closures -> could make these fully type infered using the algorithms from PL based on the AST?
 let i = { x - 1 + 4 } in (x: i32) -> i32
 
 let i = {
@@ -54,3 +57,14 @@ r.area
 match x with {
     p: i32 ==> x + 1
 }
+
+
+// write a verify function for multiple branch control statements to make
+// sure ret type is consistent
+let x = if y < 4 { ret 8 } else { ret 9 }
+
+
+
+
+
+

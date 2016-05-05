@@ -217,7 +217,36 @@ void LLVMGenerator::generate_declaration(DeclarationNode * node) {
         expression = Builder.CreateLoad(expression);
     }
     
-    Builder.CreateStore(expression, location);
+    // if the expression is of boolean type, then it is mostly likely a binary comparison node
+    // so get the value from the comparison (-1 or 0) and turn it into a new compatible type
+    
+    // if expression is a literal boolean expression (3 < 4) or a boolean literal (true), the result is a ConstantInt
+    llvm::ConstantInt * CI = nullptr;
+    if ((CI = llvm::dyn_cast<llvm::ConstantInt>(expression)) &&
+        (node->expression->get_expression_kind() == BOOLEAN_EXPRESSION ||
+         node->expression->type->get_type_kind() == BOOLEAN_TYPE)) {
+        
+        // true is -1, false is 0
+        int64_t value = CI->getSExtValue();
+        if (value == -1) value = 1; // make true be 1, not -1
+        
+        llvm::APInt boolean_value = llvm::APInt(8, value, true);
+        expression = llvm::ConstantInt::get(Context, boolean_value);
+    }
+    
+    // at this point, the expression is either a proper value to store, or a boolean expression
+    // so if it's a comparison, we must properly assign values based on the result
+    
+    // if the expression is a general boolean expression (x < y), the result is a CmpInst
+    // so get the value from the comparison (-1 or 0) and turn it into a new compatible type
+    if (llvm::CmpInst * comparison = llvm::dyn_cast<llvm::CmpInst>(expression)) {
+        
+        // convert comparison to true or false and store in location
+        store_comparison_in_boolean(comparison, location);
+        
+    } else {
+        Builder.CreateStore(expression, location);
+    }
 }
 
 void LLVMGenerator::generate_print(PrintNode * node) {
@@ -300,9 +329,9 @@ void LLVMGenerator::generate_block(BlockNode * node) {
 
 llvm::Value * LLVMGenerator::generate_expression(ExpressionNode * node) {
     switch (node->get_expression_kind()) {
-        case NUMBER_EXPRESSION:   return generate_number  (dynamic_cast<NumberNode *>(node));   break;
-        case BOOLEAN_EXPRESSION:  return generate_boolean (dynamic_cast<BooleanNode *>(node));  break;
-        case BINARY_EXPRESSION:   return generate_binary  (dynamic_cast<BinaryNode *>(node));   break;
+        case NUMBER_EXPRESSION:   return generate_number  (dynamic_cast<NumberNode   *>(node)); break;
+        case BOOLEAN_EXPRESSION:  return generate_boolean (dynamic_cast<BooleanNode  *>(node)); break;
+        case BINARY_EXPRESSION:   return generate_binary  (dynamic_cast<BinaryNode   *>(node)); break;
         case LOCATION_EXPRESSION: return generate_location(dynamic_cast<LocationNode *>(node)); break;
     }
 }
@@ -312,7 +341,7 @@ llvm::Value * LLVMGenerator::generate_number(NumberNode * node) {
     llvm::APInt value = llvm::APInt(32, node->constant->value, true);
     
     // return integer
-    return llvm::ConstantInt::get(module->getContext(), value);
+    return llvm::ConstantInt::get(Context, value);
 }
 
 llvm::Value * LLVMGenerator::generate_boolean(BooleanNode * node) {
@@ -320,7 +349,7 @@ llvm::Value * LLVMGenerator::generate_boolean(BooleanNode * node) {
     llvm::APInt value = llvm::APInt(8, node->constant->value, true);
     
     // return integer
-    return llvm::ConstantInt::get(module->getContext(), value);
+    return llvm::ConstantInt::get(Context, value);
 }
 
 llvm::Value * LLVMGenerator::generate_binary(BinaryNode * node) {
@@ -389,11 +418,11 @@ llvm::Type * LLVMGenerator::get_llvm_type(Type * t) {
     if (t->get_type_kind() == INTEGER_TYPE) {
         // for now
         Integer * type = dynamic_cast<Integer *>(t);
-        return llvm::IntegerType::get(module->getContext(), type->get_num_bits());
+        return llvm::IntegerType::get(Context, type->get_num_bits());
     }
     
     if (t->get_type_kind() == BOOLEAN_TYPE) {
-        return llvm::IntegerType::get(module->getContext(), 8);
+        return llvm::IntegerType::get(Context, 8);
     }
     
     return nullptr;
@@ -412,14 +441,39 @@ void LLVMGenerator::convert_boolean_to_comparison(llvm::Value ** condition, Expr
             *condition = Builder.CreateLoad(*condition);
         }
         
-        llvm::IntegerType * bool_type = llvm::IntegerType::get(module->getContext(), 8);
+        llvm::IntegerType * bool_type = llvm::IntegerType::get(Context, 8);
         llvm::ConstantInt * one = llvm::ConstantInt::get(bool_type, 1);
         *condition = Builder.CreateICmpEQ(*condition, one);
     }
 }
 
-//llvm::Value * LLVMGenerator::convert_boolean_to_comparison(llvm::Value * condition) {
-//    llvm::IntegerType * bool_type = llvm::IntegerType::get(module->getContext(), 8);
-//    llvm::ConstantInt * one = llvm::ConstantInt::get(bool_type, 1);
-//    return Builder.CreateICmpEQ(condition, one);
-//}
+void LLVMGenerator::store_comparison_in_boolean(llvm::CmpInst * condition, llvm::Value * location) {
+    // get parent function
+    llvm::Function * function = Builder.GetInsertBlock()->getParent();
+    
+    llvm::APInt true_boolean_value = llvm::APInt(8, 1, true);
+    llvm::ConstantInt * true_value = llvm::ConstantInt::get(Context, true_boolean_value);
+    
+    llvm::APInt false_boolean_value = llvm::APInt(8, 0, true);
+    llvm::ConstantInt * false_value = llvm::ConstantInt::get(Context, false_boolean_value);
+    
+    llvm::BasicBlock * true_block = llvm::BasicBlock::Create(Context, "eval_true");
+    llvm::BasicBlock * false_block = llvm::BasicBlock::Create(Context, "eval_false");
+    llvm::BasicBlock * end_block = llvm::BasicBlock::Create(Context, "eval_end");
+    
+    function->getBasicBlockList().push_back(true_block);
+    function->getBasicBlockList().push_back(false_block);
+    function->getBasicBlockList().push_back(end_block);
+    
+    Builder.CreateCondBr(condition, true_block, false_block);
+    
+    Builder.SetInsertPoint(true_block);
+    Builder.CreateStore(true_value, location);
+    Builder.CreateBr(end_block);
+    
+    Builder.SetInsertPoint(false_block);
+    Builder.CreateStore(false_value, location);
+    Builder.CreateBr(end_block);
+    
+    Builder.SetInsertPoint(end_block);
+}
