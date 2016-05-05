@@ -13,9 +13,10 @@
 #include "type.h"
 
 enum expression_kind {
-    NUMBER_EXPRESSION,
-    BOOLEAN_EXPRESSION,
+    NUMBER_LITERAL,
+    BOOLEAN_LITERAL,
     BINARY_EXPRESSION,
+    UNARY_EXPRESSION,
     LOCATION_EXPRESSION
 };
 

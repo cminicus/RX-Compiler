@@ -53,6 +53,10 @@ enum token_kind {
     GREATER_THAN,
     GREATER_THAN_EQUALS,
     
+    LOGICAL_AND,
+    LOGICAL_OR,
+//    LOGICAL_NOT,
+    
     // utility
     NEW_LINE,
     END_OF_FILE

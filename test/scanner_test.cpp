@@ -111,7 +111,7 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
     
     // ------------------------------ Symbols ----------------------------------
     SECTION("scanner scans symbols correctly") {
-        Scanner s("() {} ; = + - * / % == != < <= > >=");
+        Scanner s("() {} ; = + - * / % == != < <= > >= && ||");
         t = s.next();
         REQUIRE(t.to_string() == "(@(1:1)");
         
@@ -164,7 +164,13 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
         REQUIRE(t.to_string() == ">=@(1:34)");
         
         t = s.next();
-        REQUIRE(t.to_string() == "eof@(1:36)");
+        REQUIRE(t.to_string() == "&&@(1:37)");
+        
+        t = s.next();
+        REQUIRE(t.to_string() == "||@(1:40)");
+        
+        t = s.next();
+        REQUIRE(t.to_string() == "eof@(1:42)");
     }
     
     // ------------------------------ Comments ---------------------------------

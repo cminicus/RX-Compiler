@@ -158,7 +158,7 @@ TEST_CASE("binary blocks generate correct code") {
         program = "let y = 4; let z = 3; let a = 8; let x = y + z * (y - a); print(x)";
         code_generator_test_helper(program, "-8\n");
         
-        
+
         program = "let x = (4 + 3) * (4 - 8); print(x)";
         code_generator_test_helper(program, "-28\n");
         

@@ -63,10 +63,6 @@ void ast_correctness_test_helper(std::string program) {
 }
 
 TEST_CASE("parser with AST parses correctly") {
-    /* 
-     Currently the AST adds no "positive" test cases since we only have
-     one type. Once there are more types, we will be able to add tests here
-    */
     
     SECTION("type inference parse correctly") {
         ast_correctness_test_helper("var x = true; x = false");
@@ -77,8 +73,11 @@ TEST_CASE("parser with AST parses correctly") {
         ast_correctness_test_helper("var x = true == false");
         ast_correctness_test_helper("var x = false != true");
         
-//        ast_correctness_test_helper("var x = true || false");
-//        ast_correctness_test_helper("var x = false && true");
+        ast_correctness_test_helper("var x = true || false");
+        ast_correctness_test_helper("var x = false && true");
+        
+        ast_correctness_test_helper("var x = 1 < 3 || false");
+        ast_correctness_test_helper("var x = 3 >= 4 && 3 < 4");
     }
 }
 
@@ -104,8 +103,8 @@ TEST_CASE("parser with AST throws correctly") {
         ast_exception_test_helper("var x = true > false");
         ast_exception_test_helper("var x = false >= true");
         
-//        ast_exception_test_helper("var x = 1 && 2");
-//        ast_exception_test_helper("var x = 3 || 6");
+        ast_exception_test_helper("var x = 1 && 2");
+        ast_exception_test_helper("var x = 3 || 6");
     }
     
     SECTION("operation type mismatch throws correctly") {
@@ -117,9 +116,14 @@ TEST_CASE("parser with AST throws correctly") {
         ast_exception_test_helper("var x = -false");
         ast_exception_test_helper("var x = -true");
         
+        // "||" binds before "<", so this attempts "3 || false"
+        ast_exception_test_helper("var x = 1 < (3 || false)");
+        // "&&" binds before ">=" or "<", so this attempts "4 && 3"
+        ast_exception_test_helper("var x = 3 >= (4 && 3) < 4");
+        
 ////        ast_exception_test_helper("var x = !1");
-////        ast_exception_test_helper("var x = false || 1");
-////        ast_exception_test_helper("var x = false && 0");
+        ast_exception_test_helper("var x = false || 1");
+        ast_exception_test_helper("var x = false && 0");
     }
 
     SECTION("incompatible assignment throws correctly") {

@@ -29,13 +29,10 @@ TEST_CASE("parser parses correctly", "[parser]") {
     
     SECTION("signed variable declarations parse correctly") {
         parser_correctness_test_helper("var x = -4");
-        parser_correctness_test_helper("var x = +4");
     }
     
     SECTION("complex variable declarations parse correctly") {
-        // negative numbers have to be in parenthesis if in factor?
-        // refactor negative numbers to be parse in scanner?
-        parser_correctness_test_helper("var x = (4 + 3) * (-2) + (4 / 8 % 2)");
+        parser_correctness_test_helper("var x = (4 + 3) * -2 + (4 / 8 % 2)");
     }
     
     SECTION("simple constant declarations parse correctly") {
@@ -43,7 +40,7 @@ TEST_CASE("parser parses correctly", "[parser]") {
     }
     
     SECTION("complex constant declarations parse correctly") {
-        parser_correctness_test_helper("let x = (4 + 3) * (-2) + (4 / 8 % 2)");
+        parser_correctness_test_helper("let x = (4 + 3) * -2 + (4 / 8 % 2)");
     }
     
     // ------------------------ Control Statements -----------------------------
@@ -199,9 +196,9 @@ TEST_CASE("parser parses correctly", "[parser]") {
     SECTION("boolean statements used as conditions parse correctly") {
         parser_correctness_test_helper("if true { print(2) }");
         parser_correctness_test_helper("let x = true; if x { print(x) }");
+        parser_correctness_test_helper("if true || false { print(2) }");
+        parser_correctness_test_helper("if false && true { print(2) }");
     }
-    
-    // TODO: add more stuff with true || false once those are added etc
 }
 
 void parser_exception_test_helper(std::string program) {

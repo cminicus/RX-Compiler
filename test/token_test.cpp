@@ -167,6 +167,16 @@ TEST_CASE("tokens initialize correctly", "[token]") {
         REQUIRE(t.to_string() == ">=@(0:10)");
     }
     
+    SECTION("&& token prints correctly") {
+        t.kind = LOGICAL_AND;
+        REQUIRE(t.to_string() == "&&@(0:10)");
+    }
+    
+    SECTION("|| token prints correctly") {
+        t.kind = LOGICAL_OR;
+        REQUIRE(t.to_string() == "||@(0:10)");
+    }
+    
     SECTION("\\n token prints correctly") {
         t.kind = NEW_LINE;
         REQUIRE(t.to_string() == "\\n@(0:10)");

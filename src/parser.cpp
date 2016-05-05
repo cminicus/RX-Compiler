@@ -167,6 +167,17 @@ void Parser::sync(std::vector<token_kind> tokens) {
     }
 }
 
+int Parser::get_token_precedence(Token t) {
+    // get precedence
+    int precedence = BinaryPrecedence[Token::mapping[t.kind]];
+    
+    // if not found (0), return -1
+    if (precedence <= 0) { return -1; }
+    
+    // otherwise return precedence
+    return precedence;
+}
+
 #pragma mark - Symbol Table
 // --------------------------- Symbol Table Functions --------------------------
 
@@ -244,7 +255,7 @@ void Parser::set_ast_root(Node *root) {
     }
 }
 
-void Parser::check_operator_typing(Token operation_token, ExpressionNode * left, ExpressionNode * right) {
+void Parser::check_binary_operator_typing(Token operation_token, ExpressionNode * left, ExpressionNode * right) {
     
     // type mismatch
     if (*(left->type) != *(right->type)) {
@@ -252,16 +263,36 @@ void Parser::check_operator_typing(Token operation_token, ExpressionNode * left,
     }
     
     // if this is a number operator and we are not using a number -> error
-    if (std::find(NumberOps.begin(), NumberOps.end(), operation_token.kind) != NumberOps.end() &&
-        (left->type->get_type_kind() != INTEGER_TYPE || right->type->get_type_kind() != INTEGER_TYPE)) {
+    if (std::find(BinaryNumberOps.begin(), BinaryNumberOps.end(), operation_token.kind) != BinaryNumberOps.end()
+        && (left->type->get_type_kind() != INTEGER_TYPE || right->type->get_type_kind() != INTEGER_TYPE)) {
         
         // TODO: cannot use operation ___ with non-integer types
         ErrorHandler::test_error(false);
     }
     
     // if this is a boolean operator and we are not using a boolean -> error
-    if (std::find(BooleanOps.begin(), BooleanOps.end(), operation_token.kind) != BooleanOps.end() &&
+    if (std::find(BinaryBooleanOps.begin(), BinaryBooleanOps.end(), operation_token.kind)
+        != BinaryBooleanOps.end() &&
         (left->type->get_type_kind() != BOOLEAN_TYPE || right->type->get_type_kind() != BOOLEAN_TYPE)) {
+        
+        // TODO: cannot use operation ___ with non-boolean types
+        ErrorHandler::test_error(false);
+    }
+}
+
+void Parser::check_unary_operator_typing(Token operation_token, ExpressionNode * expression) {
+    
+    // if this is a number operator and we are not using a number -> error
+    if (std::find(UnaryNumberOps.begin(), UnaryNumberOps.end(), operation_token.kind) != UnaryNumberOps.end() &&
+        (expression->type->get_type_kind() != INTEGER_TYPE)) {
+        
+        // TODO: cannot use operation ___ with non-integer types
+        ErrorHandler::test_error(false);
+    }
+    
+    // if this is a boolean operator and we are not using a boolean -> error
+    if (std::find(UnaryBooleanOps.begin(), UnaryBooleanOps.end(), operation_token.kind) != UnaryBooleanOps.end()
+        && (expression->type->get_type_kind() != BOOLEAN_TYPE)) {
         
         // TODO: cannot use operation ___ with non-boolean types
         ErrorHandler::test_error(false);
@@ -452,99 +483,105 @@ DeclarationNode * Parser::ConstantDeclaration() {
 }
 
 /**
- *  Expression = SimpleExpression [RelOp SimpleExpression]
+ *  Expression = Unary BinaryRHS
  */
 ExpressionNode * Parser::Expression() {
     
-    ExpressionNode * left = SimpleExpression();
+    ExpressionNode * left = UnaryExpression();
     
-    if (optional_match(RelOps)) {
-        
-        Token operation_token = last;
-        ExpressionNode * right = SimpleExpression();
-        
-        if (!no_ast) {
-            
-            // check for mismatch typing and illegal types for operators (including RelOps)
-            check_operator_typing(operation_token, left, right);
-            
-            left = new BinaryNode(operation_token.kind, left, right);
-            left->type = new Boolean;
-        }
+    if (check(BinaryOps)) {
+        return BinaryExpression(0, left);
     }
     
     return left;
 }
 
 /**
- *  SimpleExpression = [“+” | “-“] Term {AddOp Term}
+ *  BinaryRHS = {BinaryOp Unary}
  */
-ExpressionNode * Parser::SimpleExpression() {
-    optional_match({PLUS, MINUS});
+ExpressionNode * Parser::BinaryExpression(int precedence, ExpressionNode * left) {
     
-    bool negate = last.kind == MINUS;
-    
-    ExpressionNode * root = Term();
-    
-    // negate the first term
-    if (!no_ast && negate) {
+    while (check(BinaryOps)) {
         
-        if (root->type->get_type_kind() != INTEGER_TYPE) {
-            // TODO: cannot negate non-integer type
-            ErrorHandler::test_error(false);
+        Token current_op = current;
+        
+        // get current precedence and see how it compares
+        int current_precedence = get_token_precedence(current_op);
+        if (current_precedence < precedence) { // <
+            return left;
         }
         
-        Constant * c = new Constant;
-        c->value = 0;
-        c->type = new Integer(32);
+        next(); // move to next token
         
-        NumberNode * zero = new NumberNode(c);
-        root = new BinaryNode(MINUS, zero, root); // operation, left, right
-    }
-    
-    while (optional_match(AddOps)) {
+        // get right hand side
+        ExpressionNode * right = UnaryExpression();
         
-        Token operation_token = last;
-        ExpressionNode * term = Term();
+        // return if error and we are using the AST
+        if (!no_ast && right == nullptr) {
+            return nullptr;
+        }
+
+        // check precedence of next token to see if it's another op
+        Token next_op = current;
+        int next_precedence = get_token_precedence(next_op);
         
+        if (next_precedence >= 0 && current_precedence < next_precedence) { // <
+            
+            // if current_op binds less tightly with the right expression than the operator after
+            // the right expression, let that operator take the right expression as it's left expression
+            right = BinaryExpression(current_precedence + 1, right);
+            
+            if (!no_ast && right == nullptr) {
+                return nullptr;
+            }
+        }
+        
+        // merge left and right into binary node
         if (!no_ast) {
             
-            // check for mismatch typing and illegal types for operators
-            check_operator_typing(operation_token, root, term);
-            root = new BinaryNode(operation_token.kind, root, term); // operation, left, right
+            // check binary operator typing
+            check_binary_operator_typing(current_op, left, right);
+            
+            left = new BinaryNode(current_op.kind, left, right);
+            
+            // if this is a RelOp, turn the node into a boolean type
+            if (std::find(RelOps.begin(), RelOps.end(), current_op.kind) != RelOps.end()) {
+                left->type = new Boolean;
+            }
         }
     }
     
-    return root;
+    // return the left argument
+    return left;
 }
 
 /**
- *  Term = Factor {MulOp Factor}
+ *  Unary = Primary | UnaryOp Unary
  */
-ExpressionNode * Parser::Term() {
-    
-    ExpressionNode * root = Factor();
-
-    while (optional_match(MulOps)) {
-        
-        Token operation_token = last;
-        ExpressionNode * factor = Factor();
-        
-        if (!no_ast) {
-            
-            // check for mismatch typing and illegal types for operators
-            check_operator_typing(operation_token, root, factor);
-            root = new BinaryNode(operation_token.kind, root, factor); // operation, left, right;
-        }
+ExpressionNode * Parser::UnaryExpression() {
+    if (!check(UnaryOps)) {
+        return Primary();
     }
-
-    return root;
+    
+    Token operation_token = current;
+    next();
+    
+    if (ExpressionNode * operand = UnaryExpression()) {
+        
+        // check typing
+        check_unary_operator_typing(operation_token, operand);
+        
+        // return new node
+        return new UnaryNode(operation_token.kind, operand);
+    }
+    
+    return nullptr;
 }
 
 /**
- *  Factor = integer | boolean | identifier | “(“ Expression “)”
+ *  Primary = integer | boolean | identifier | “(“ Expression “)”
  */
-ExpressionNode * Parser::Factor() {
+ExpressionNode * Parser::Primary() {
     
     if (check({INTEGER})) {
         
@@ -618,7 +655,7 @@ ExpressionNode * Parser::Factor() {
     } else {
         // this will throw the incorrect match error for us
         // probably not the best error though
-        match({INTEGER, IDENTIFIER, OPEN_PAREN});
+        match({INTEGER, TRUE_TOK, FALSE_TOK, IDENTIFIER, OPEN_PAREN});
     }
     
     return nullptr;

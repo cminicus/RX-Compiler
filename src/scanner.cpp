@@ -155,7 +155,8 @@ bool Scanner::is_symbol(char c) {
     c == '}' || c == ';' || c == '=' ||
     c == '+' || c == '-' || c == '*' ||
     c == '/' || c == '%' || c == '!' ||
-    c == '<' || c == '>' || c == '\n';
+    c == '<' || c == '>' || c == '&' ||
+    c == '|' ||c == '\n';
 }
 
 /**
@@ -292,15 +293,6 @@ Token Scanner::handle_symbol() {
             break;
         case '+': t.kind = PLUS; break;
         case '-': t.kind = MINUS; break;
-//        case '-':
-//            if (position < source_length - 1 && is_digit(source[position + 1])) {
-//                position++;
-//                Token digit = handle_integer();
-//                t.kind = INTEGER;
-//                t.value = -digit.value;
-//            } else {
-//                t.kind = MINUS; break;
-//            }
         case '*': t.kind = MULTIPLY; break;
         case '/': t.kind = DIVIDE; break;
         case '%': t.kind = MODULO; break;
@@ -332,6 +324,26 @@ Token Scanner::handle_symbol() {
                 col_number++;
             } else {
                 t.kind = GREATER_THAN;
+            }
+            break;
+        case '&':
+            if (position < source_length - 1 && source[position + 1] == '&') {
+                
+                t.kind = LOGICAL_AND;
+                position++;
+                col_number++;
+            } else {
+                // nothing yet (eventually bitwise_and)
+            }
+            break;
+        case '|':
+            if (position < source_length - 1 && source[position + 1] == '|') {
+                
+                t.kind = LOGICAL_OR;
+                position++;
+                col_number++;
+            } else {
+                // nothing yet (eventually bitwise_or)
             }
             break;
         case '\n':

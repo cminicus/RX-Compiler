@@ -223,7 +223,7 @@ void LLVMGenerator::generate_declaration(DeclarationNode * node) {
     // if expression is a literal boolean expression (3 < 4) or a boolean literal (true), the result is a ConstantInt
     llvm::ConstantInt * CI = nullptr;
     if ((CI = llvm::dyn_cast<llvm::ConstantInt>(expression)) &&
-        (node->expression->get_expression_kind() == BOOLEAN_EXPRESSION ||
+        (node->expression->get_expression_kind() == BOOLEAN_LITERAL ||
          node->expression->type->get_type_kind() == BOOLEAN_TYPE)) {
         
         // true is -1, false is 0
@@ -329,9 +329,10 @@ void LLVMGenerator::generate_block(BlockNode * node) {
 
 llvm::Value * LLVMGenerator::generate_expression(ExpressionNode * node) {
     switch (node->get_expression_kind()) {
-        case NUMBER_EXPRESSION:   return generate_number  (dynamic_cast<NumberNode   *>(node)); break;
-        case BOOLEAN_EXPRESSION:  return generate_boolean (dynamic_cast<BooleanNode  *>(node)); break;
+        case NUMBER_LITERAL:      return generate_number  (dynamic_cast<NumberNode   *>(node)); break;
+        case BOOLEAN_LITERAL:     return generate_boolean (dynamic_cast<BooleanNode  *>(node)); break;
         case BINARY_EXPRESSION:   return generate_binary  (dynamic_cast<BinaryNode   *>(node)); break;
+        case UNARY_EXPRESSION:    return generate_unary   (dynamic_cast<UnaryNode    *>(node)); break;
         case LOCATION_EXPRESSION: return generate_location(dynamic_cast<LocationNode *>(node)); break;
     }
 }
@@ -380,6 +381,21 @@ llvm::Value * LLVMGenerator::generate_binary(BinaryNode * node) {
         case LESS_THAN_EQUALS:    return Builder.CreateICmpSLE(left, right, "<=");
         case GREATER_THAN:        return Builder.CreateICmpSGT(left, right, ">" );
         case GREATER_THAN_EQUALS: return Builder.CreateICmpSGE(left, right, ">=");
+        default:                  return nullptr;
+    }
+}
+
+llvm::Value * LLVMGenerator::generate_unary(UnaryNode * node) {
+    llvm::Value * expression = generate_expression(node->expression);
+    
+    // load if needed
+    if (node->expression->get_expression_kind() == LOCATION_EXPRESSION) {
+        expression = Builder.CreateLoad(expression);
+    }
+    
+    switch (node->operation) {
+        // numerical operators
+        case MINUS:               return Builder.CreateNeg(expression);
         default:                  return nullptr;
     }
 }
@@ -434,7 +450,7 @@ void LLVMGenerator::convert_boolean_to_comparison(llvm::Value ** condition, Expr
 
     // if it's either a variable of boolean type, or a boolean literal (boolean_expression), alter the pointers
     if ((node->type->get_type_kind() == BOOLEAN_TYPE && node->get_expression_kind() == LOCATION_EXPRESSION) ||
-        node->get_expression_kind() == BOOLEAN_EXPRESSION) {
+        node->get_expression_kind() == BOOLEAN_LITERAL) {
         
         // variable holding a boolean value
         if (node->get_expression_kind() == LOCATION_EXPRESSION) {

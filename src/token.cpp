@@ -40,6 +40,9 @@ std::map<token_kind, std::string> Token::mapping = {
     {GREATER_THAN, ">"},
     {GREATER_THAN_EQUALS, ">="},
     
+    {LOGICAL_AND, "&&"},
+    {LOGICAL_OR, "||"},
+    
     {NEW_LINE, "\\n"},
     {END_OF_FILE, "eof"}
 };

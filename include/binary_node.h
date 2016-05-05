@@ -23,8 +23,8 @@ public:
     expression_kind get_expression_kind() { return BINARY_EXPRESSION; };
     
     token_kind operation;
-    ExpressionNode *left;
-    ExpressionNode *right;
+    ExpressionNode * left;
+    ExpressionNode * right;
 };
 
 #endif /* binary_node_h */

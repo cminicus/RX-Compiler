@@ -20,6 +20,7 @@
 #include "number_node.h"
 #include "boolean_node.h"
 #include "binary_node.h"
+#include "unary_node.h"
 #include "variable_node.h"
 #include "constant_node.h"
 

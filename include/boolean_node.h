@@ -17,7 +17,7 @@ class BooleanNode: public ExpressionNode {
 public:
     BooleanNode(Constant * c) : constant(c) { this->type = c->type; }
     ~BooleanNode() { delete constant; }
-    expression_kind get_expression_kind() { return BOOLEAN_EXPRESSION; };
+    expression_kind get_expression_kind() { return BOOLEAN_LITERAL; };
     
     Constant * constant;
 };

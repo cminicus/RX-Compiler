@@ -44,26 +44,77 @@ private:
         EQUALS, NOT_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
         GREATER_THAN, GREATER_THAN_EQUALS
     };
+//
+//    std::vector<token_kind> AddOps = {
+//        PLUS, MINUS, LOGICAL_OR
+//    };
+//    
+//    std::vector<token_kind> MulOps = {
+//        MULTIPLY, DIVIDE, MODULO, LOGICAL_AND
+//    };
     
-    std::vector<token_kind> AddOps = {
-        PLUS, MINUS
+    // these are unary operators that ONLY numbers can use
+    std::vector<token_kind> UnaryNumberOps = {
+        MINUS // -a
     };
     
-    std::vector<token_kind> MulOps = {
-        MULTIPLY, DIVIDE, MODULO
+    // these are binary operators that ONLY numbers can use
+    std::vector<token_kind> BinaryNumberOps = {
+        LESS_THAN, LESS_THAN_EQUALS, // a < b, a <= b
+        GREATER_THAN, GREATER_THAN_EQUALS, // a > b, a >= b
+        PLUS, MINUS, // a + b, a - b
+        MULTIPLY, DIVIDE, MODULO // a * b, a / b, a % b
     };
     
-    // these are operators that ONLY numbers can use
-    std::vector<token_kind> NumberOps = {
+    // these are unary operators that ONLY booleans can use
+    std::vector<token_kind> UnaryBooleanOps = {
+        // LOGICAL_NOT (!)
+    };
+    
+    // these are binary operators that ONLY booleans can use
+    std::vector<token_kind> BinaryBooleanOps = {
+        LOGICAL_OR, // true || false
+        LOGICAL_AND // true && false
+    };
+    
+    std::vector<token_kind> BinaryOps = {
+        EQUALS, NOT_EQUALS,
         LESS_THAN, LESS_THAN_EQUALS,
         GREATER_THAN, GREATER_THAN_EQUALS,
         PLUS, MINUS,
-        MULTIPLY, DIVIDE, MODULO
+        MULTIPLY, DIVIDE, MODULO,
+        LOGICAL_OR, LOGICAL_AND
     };
     
-    // these are operators that ONLY booleans can use
-    std::vector<token_kind> BooleanOps = {
+    std::vector<token_kind> UnaryOps = {
+        PLUS, // +a
+        MINUS // -a
+    };
+    
+    std::map<std::string, int> BinaryPrecedence = {
         
+        // Multiplicative
+        {Token::mapping[MULTIPLY],    150},
+        {Token::mapping[DIVIDE],      150},
+        {Token::mapping[MODULO],      150},
+        
+        // Addative
+        {Token::mapping[PLUS],  140},
+        {Token::mapping[MINUS], 140},
+        
+        // Comparative
+        {Token::mapping[LESS_THAN],           130},
+        {Token::mapping[LESS_THAN_EQUALS],    130},
+        {Token::mapping[GREATER_THAN],        130},
+        {Token::mapping[GREATER_THAN_EQUALS], 130},
+        {Token::mapping[EQUALS],              130},
+        {Token::mapping[NOT_EQUALS],          130},
+        
+        // Conjunctive
+        {Token::mapping[LOGICAL_AND], 120},
+        
+        // Disjunctive
+        {Token::mapping[LOGICAL_OR],  110},
     };
     
     // Utilities
@@ -73,6 +124,7 @@ private:
     bool optional_match(std::vector<token_kind>);
     bool check(std::vector<token_kind>);
     void sync(std::vector<token_kind>);
+    int get_token_precedence(Token);
     
     // Symbol Table Functions
     void create_scope();
@@ -83,13 +135,12 @@ private:
     
     // AST Functions
     void set_ast_root(Node *);
-    void check_operator_typing(Token, ExpressionNode * left, ExpressionNode * right);
+    void check_binary_operator_typing(Token, ExpressionNode *, ExpressionNode *);
+    void check_unary_operator_typing(Token, ExpressionNode *);
     
     // Entry Functions
     Variable * create_variable_entry(token_match, Type *);
     Constant * create_constant_entry(token_match, Type *);
-    
-    
     
     // Grammar Functions
     void Statements();
@@ -99,9 +150,9 @@ private:
     DeclarationNode * ConstantDeclaration();
     
     ExpressionNode * Expression();
-    ExpressionNode * SimpleExpression();
-    ExpressionNode * Term();
-    ExpressionNode * Factor();
+    ExpressionNode * BinaryExpression(int, ExpressionNode *);
+    ExpressionNode * UnaryExpression();
+    ExpressionNode * Primary();
     
     InstructionNode * Instructions();
     InstructionNode * Instruction();

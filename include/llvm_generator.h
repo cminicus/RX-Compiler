@@ -57,6 +57,7 @@ private:
     llvm::Value * generate_number(NumberNode *);
     llvm::Value * generate_boolean(BooleanNode *);
     llvm::Value * generate_binary(BinaryNode *);
+    llvm::Value * generate_unary(UnaryNode *);
     llvm::Value * generate_location(LocationNode *);
     llvm::Value * generate_variable(VariableNode *);
     llvm::Value * generate_constant(ConstantNode *);

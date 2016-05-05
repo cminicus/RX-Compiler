@@ -17,7 +17,7 @@ class NumberNode: public ExpressionNode {
 public:
     NumberNode(Constant * c) : constant(c) { this->type = c->type; }
     ~NumberNode() { delete constant; }
-    expression_kind get_expression_kind() { return NUMBER_EXPRESSION; };
+    expression_kind get_expression_kind() { return NUMBER_LITERAL; };
     
     Constant * constant;
 };
