@@ -190,7 +190,7 @@ TEST_CASE("parser parses correctly", "[parser]") {
     // ---------------------------- Booleans -----------------------------------
     
     SECTION("boolean statements parse correctly") {
-        parser_correctness_test_helper("let x = true; let y = false");
+        parser_correctness_test_helper("let x = true; let y = false; let z = !true");
     }
     
     SECTION("boolean statements used as conditions parse correctly") {

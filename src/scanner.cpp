@@ -302,7 +302,7 @@ Token Scanner::handle_symbol() {
                 position++;
                 col_number++;
             } else {
-                ErrorHandler::illegal_character(true, '!', line_number, col_number);
+                t.kind = LOGICAL_NOT;
             }
             break;
         case '<':

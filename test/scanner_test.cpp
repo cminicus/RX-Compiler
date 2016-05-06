@@ -111,7 +111,7 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
     
     // ------------------------------ Symbols ----------------------------------
     SECTION("scanner scans symbols correctly") {
-        Scanner s("() {} ; = + - * / % == != < <= > >= && ||");
+        Scanner s("() {} ; = + - * / % == != < <= > >= && || !");
         t = s.next();
         REQUIRE(t.to_string() == "(@(1:1)");
         
@@ -170,7 +170,10 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
         REQUIRE(t.to_string() == "||@(1:40)");
         
         t = s.next();
-        REQUIRE(t.to_string() == "eof@(1:42)");
+        REQUIRE(t.to_string() == "!@(1:43)");
+        
+        t = s.next();
+        REQUIRE(t.to_string() == "eof@(1:44)");
     }
     
     // ------------------------------ Comments ---------------------------------
@@ -266,10 +269,7 @@ TEST_CASE("scanner throws exceptions correctly", "[scanner]") {
     }
     
     SECTION("scanner handles illegal characters correctly") {
-        Scanner s1("hey!");
-        REQUIRE_THROWS(while (s1.next().kind != END_OF_FILE) {});
-        
-        Scanner s2("he_y");
-        REQUIRE_THROWS(while (s2.next().kind != END_OF_FILE) {});
+        Scanner s("he_y");
+        REQUIRE_THROWS(while (s.next().kind != END_OF_FILE) {});
     }
 }

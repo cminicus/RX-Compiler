@@ -444,33 +444,39 @@ TEST_CASE("booleans generate correct code") {
         std::string program = "if true { print(1) }";
         code_generator_test_helper(program, "1\n");
         
-        program = "if false { print(1) }";
+        program = "if false { print(2) }";
         code_generator_test_helper(program, "");
         
-        program = "let x = true; if x { print(1) }";
-        code_generator_test_helper(program, "1\n");
+        program = "let x = true; if x { print(3) }";
+        code_generator_test_helper(program, "3\n");
         
-        program = "let x = false; if x { print(1) }";
+        program = "let x = false; if x { print(4) }";
         code_generator_test_helper(program, "");
         
-        program = "let y = 3; let z = 4; if y < z { print (1) }";
-        code_generator_test_helper(program, "1\n");
+        program = "let y = 3; let z = 4; if y < z { print (5) }";
+        code_generator_test_helper(program, "5\n");
         
-        program = "let y = 3; let z = 4; var x = y < z; if x { print (1) }";
-        code_generator_test_helper(program, "1\n");
+        program = "let y = 3; let z = 4; var x = y < z; if x { print (6) }";
+        code_generator_test_helper(program, "6\n");
     }
     
     SECTION("boolean equality in control statements generates correctly") {
         std::string program = "if true == true { print(1) }";
         code_generator_test_helper(program, "1\n");
         
-        program = "if true != true { print(1) }";
+        program = "if true != true { print(2) }";
         code_generator_test_helper(program, "");
         
-        program = "let x = false; if x == false { print(1) }";
-        code_generator_test_helper(program, "1\n");
+        program = "if !false { print(3) }";
+        code_generator_test_helper(program, "3\n");
         
-        program = "let x = false; if x != false { print(1) }";
+        program = "if !false != !true { print(4) }";
+        code_generator_test_helper(program, "4\n");
+        
+        program = "let x = false; if x == false { print(5) }";
+        code_generator_test_helper(program, "5\n");
+        
+        program = "let x = false; if x != false { print(6) }";
         code_generator_test_helper(program, "");
     }
 }

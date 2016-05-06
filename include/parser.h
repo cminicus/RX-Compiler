@@ -44,15 +44,7 @@ private:
         EQUALS, NOT_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
         GREATER_THAN, GREATER_THAN_EQUALS
     };
-//
-//    std::vector<token_kind> AddOps = {
-//        PLUS, MINUS, LOGICAL_OR
-//    };
-//    
-//    std::vector<token_kind> MulOps = {
-//        MULTIPLY, DIVIDE, MODULO, LOGICAL_AND
-//    };
-    
+
     // these are unary operators that ONLY numbers can use
     std::vector<token_kind> UnaryNumberOps = {
         MINUS // -a
@@ -68,7 +60,7 @@ private:
     
     // these are unary operators that ONLY booleans can use
     std::vector<token_kind> UnaryBooleanOps = {
-        // LOGICAL_NOT (!)
+         LOGICAL_NOT, // (!)
     };
     
     // these are binary operators that ONLY booleans can use
@@ -87,8 +79,9 @@ private:
     };
     
     std::vector<token_kind> UnaryOps = {
-        PLUS, // +a
-        MINUS // -a
+        PLUS,  // +a
+        MINUS, // -a
+        LOGICAL_NOT, // !a
     };
     
     std::map<std::string, int> BinaryPrecedence = {

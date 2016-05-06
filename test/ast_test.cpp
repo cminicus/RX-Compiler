@@ -78,6 +78,9 @@ TEST_CASE("parser with AST parses correctly") {
         
         ast_correctness_test_helper("var x = 1 < 3 || false");
         ast_correctness_test_helper("var x = 3 >= 4 && 3 < 4");
+        
+        ast_correctness_test_helper("var x = !true");
+        ast_correctness_test_helper("var x = !(3 < 4) || !false");
     }
 }
 
@@ -121,7 +124,7 @@ TEST_CASE("parser with AST throws correctly") {
         // "&&" binds before ">=" or "<", so this attempts "4 && 3"
         ast_exception_test_helper("var x = 3 >= (4 && 3) < 4");
         
-////        ast_exception_test_helper("var x = !1");
+        ast_exception_test_helper("var x = !1");
         ast_exception_test_helper("var x = false || 1");
         ast_exception_test_helper("var x = false && 0");
     }

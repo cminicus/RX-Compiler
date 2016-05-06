@@ -40,7 +40,7 @@ std::string LLVMGenerator::generate() {
     generate_ast();
     
     llvm::verifyModule(*module);
-    PM->run(*module);
+//    PM->run(*module);
     
     std::string output;
     llvm::raw_string_ostream output_stream(output);
@@ -395,8 +395,10 @@ llvm::Value * LLVMGenerator::generate_unary(UnaryNode * node) {
     
     switch (node->operation) {
         // numerical operators
-        case MINUS:               return Builder.CreateNeg(expression);
-        default:                  return nullptr;
+        case MINUS:       return Builder.CreateNeg(expression, "-");
+        // boolean operators
+        case LOGICAL_NOT: return Builder.CreateXor(expression, 1, "!"); // same as logical not
+        default:          return nullptr;
     }
 }
 
@@ -448,9 +450,11 @@ llvm::Type * LLVMGenerator::get_llvm_type(Type * t) {
 // takes in a pointer to a pointer so it can choose to not alter it if this is not a literal/variable
 void LLVMGenerator::convert_boolean_to_comparison(llvm::Value ** condition, ExpressionNode * node) {
 
-    // if it's either a variable of boolean type, or a boolean literal (boolean_expression), alter the pointers
-    if ((node->type->get_type_kind() == BOOLEAN_TYPE && node->get_expression_kind() == LOCATION_EXPRESSION) ||
-        node->get_expression_kind() == BOOLEAN_LITERAL) {
+    // expression is a variable or unary expression of boolean type
+    if ((node->type->get_type_kind() == BOOLEAN_TYPE &&
+         (node->get_expression_kind() == LOCATION_EXPRESSION || node->get_expression_kind() == UNARY_EXPRESSION))
+         // or it's a boolean literal
+         || node->get_expression_kind() == BOOLEAN_LITERAL) {
         
         // variable holding a boolean value
         if (node->get_expression_kind() == LOCATION_EXPRESSION) {

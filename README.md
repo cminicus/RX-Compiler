@@ -91,7 +91,8 @@ scan(x)
 ## Future Plans
 
 ###Proposed Timeline
-- Booleans/changes to grammar to make comparisons expressions
+- **DONE:** ~~Booleans/changes to grammar to make comparisons expressions~~
+- **DONE:** Basic Unary Operators
 - Actual use type inference/annotation since bool is the second type
 - Add for loops
 - Add do-while loops
@@ -111,7 +112,6 @@ scan(x)
 
 **Not sure when...**
 
-- Unary Operators
 - The rest of the major Binary Operators (++ -- ^ | &)
 - Custom binary/unary operators/switch to precedence system
 - Optionals (if let, ?, ??, etc)

@@ -55,7 +55,7 @@ enum token_kind {
     
     LOGICAL_AND,
     LOGICAL_OR,
-//    LOGICAL_NOT,
+    LOGICAL_NOT,
     
     // utility
     NEW_LINE,

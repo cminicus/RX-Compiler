@@ -42,6 +42,7 @@ std::map<token_kind, std::string> Token::mapping = {
     
     {LOGICAL_AND, "&&"},
     {LOGICAL_OR, "||"},
+    {LOGICAL_NOT, "!"},
     
     {NEW_LINE, "\\n"},
     {END_OF_FILE, "eof"}
