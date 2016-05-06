@@ -36,7 +36,7 @@ Since this project will be changing constantly, I have made links to some google
 ###Proposed Timeline
 - ~~Booleans/changes to grammar to make comparisons expressions~~
 - ~~Basic Unary Operators~~
-- Actual use type inference/annotation since bool is the second type
+- ~~Actual use type inference/annotation since bool is the second type~~
 - Add for loops
 - Add do-while loops
 - Add match statements
