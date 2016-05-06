@@ -55,7 +55,7 @@ Since this project will be changing constantly, I have made links to some google
 
 **Not sure when...**
 
-- The rest of the major Binary Operators (++ -- ^ | &)
+- The rest of the major Binary/Unary Operators (++ -- ^ | & etc)
 - Custom binary/unary operators/switch to precedence system
 - Optionals (if let, ?, ??, etc)
 - Closures
