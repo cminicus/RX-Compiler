@@ -171,6 +171,15 @@ std::string ErrorHandler::undeclared_identifier(bool flag, Token encountered) {
     return s;
 }
 
+std::string ErrorHandler::identifier_must_be_type(bool flag, Token encountered) {
+    std::string s = TYPE_IDENTIFIER(encountered.identifier,
+                                    encountered.line_position,
+                                    encountered.col_position);
+    
+    push_error(flag, s, encountered.line_position, encountered.col_position);
+    return s;
+}
+
 // AST
 std::string ErrorHandler::non_variable_assignment(bool flag, Token token) {
     std::string s = NON_VARIABLE_ASSIGNMENT(token.identifier,
@@ -207,6 +216,33 @@ std::string ErrorHandler::incompatible_assignment(bool flag, Token token, Type *
                                             Type::mapping[type->get_type_kind()],
                                             token.line_position,
                                             token.col_position);
+    
+    push_error(flag, s, token.line_position, token.col_position);
+    return s;
+}
+
+std::string ErrorHandler::non_annotated_variable_must_have_expression(bool flag, Token token) {
+    std::string s = NON_ANNOTATED_VARIABLE(token.identifier,
+                                           token.line_position,
+                                           token.col_position);
+    
+    push_error(flag, s, token.line_position, token.col_position);
+    return s;
+}
+
+std::string ErrorHandler::expression_and_annotation_mismatch(bool flag, Token token, Type * a, Type * e) {
+    std::string s = ANNOTATION_EXPRESSION_MISMATCH(token.identifier,
+                                                   Type::mapping[a->get_type_kind()],
+                                                   Type::mapping[e->get_type_kind()],
+                                                   token.line_position,
+                                                   token.col_position);
+    
+    push_error(flag, s, token.line_position, token.col_position);
+    return s;
+}
+
+std::string ErrorHandler::control_expression_not_boolean(bool flag, Token token) {
+    std::string s = CONTROL_EXPRESSION_NOT_BOOL(token.line_position, token.col_position);
     
     push_error(flag, s, token.line_position, token.col_position);
     return s;

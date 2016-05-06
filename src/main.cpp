@@ -42,7 +42,7 @@ std::string handle_arguments(int argc, const char * argv[]) {
 }
 
 void compile(std::string filename) {
-    RXCompiler compiler(BUILD);
+    RXCompiler compiler(RUN);
     compiler.set_filename(filename);
     compiler.compile();
 }

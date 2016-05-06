@@ -35,6 +35,8 @@ using std::to_string;
 
 #define UNDECLARED_IDENTIFIER(id, line, col) "undeclared identifier '" + id + "' at " + to_string(line) + ":" + to_string(col)
 
+#define TYPE_IDENTIFIER(id, line, col) "identifier '" + id + "' at " + to_string(line) + ":" + to_string(col) + " must denote a type"
+
 
 #define NON_VARIABLE_ASSIGNMENT(id, line, col) "cannot assign to non-variable identifier '" + id + "' at " + to_string(line) + ":" + to_string(col)
 
@@ -43,5 +45,11 @@ using std::to_string;
 #define OPERATION_TYPE_MISMATCH(op, type1, type2, line, col) "cannot apply operation '" + op + "' at " + to_string(line) + ":" + to_string(col) + " with expressions of type '" + type1 + "' and '" + type2 + "'"
 
 #define INCOMPATIBLE_ASSIGNMENT(id, type, line, col) "cannot assign to variable '" + id + "' at " + to_string(line) + ":" + to_string(col) + " with incompatible type '" + type + "'"
+
+#define NON_ANNOTATED_VARIABLE(id, line, col) "non-initialized variable '" + id + "' at " + to_string(line) + ":" + to_string(col) + " must have a type annotation"
+
+#define ANNOTATION_EXPRESSION_MISMATCH(id, t1, t2, line, col) "cannot assign to annotated variable '" + id + "' at " + to_string(line) + ":" + to_string(col) + " of type '" + t1 + "' with expression of type '" + t2 + "'"
+
+#define CONTROL_EXPRESSION_NOT_BOOL(line, col) "expression in control statement at " + to_string(line) + ":" + to_string(col) + " must be of boolean type"
 
 #endif /* error_messages_h */

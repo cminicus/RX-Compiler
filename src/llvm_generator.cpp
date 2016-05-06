@@ -217,9 +217,6 @@ void LLVMGenerator::generate_declaration(DeclarationNode * node) {
         expression = Builder.CreateLoad(expression);
     }
     
-    // if the expression is of boolean type, then it is mostly likely a binary comparison node
-    // so get the value from the comparison (-1 or 0) and turn it into a new compatible type
-    
     // if expression is a literal boolean expression (3 < 4) or a boolean literal (true), the result is a ConstantInt
     llvm::ConstantInt * CI = nullptr;
     if ((CI = llvm::dyn_cast<llvm::ConstantInt>(expression)) &&
@@ -233,9 +230,6 @@ void LLVMGenerator::generate_declaration(DeclarationNode * node) {
         llvm::APInt boolean_value = llvm::APInt(8, value, true);
         expression = llvm::ConstantInt::get(Context, boolean_value);
     }
-    
-    // at this point, the expression is either a proper value to store, or a boolean expression
-    // so if it's a comparison, we must properly assign values based on the result
     
     // if the expression is a general boolean expression (x < y), the result is a CmpInst
     // so get the value from the comparison (-1 or 0) and turn it into a new compatible type

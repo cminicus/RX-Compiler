@@ -1,5 +1,6 @@
 var x = -9
 x = x + 12
+print(x)s
 
 /*
 if x < 30 {

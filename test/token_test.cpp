@@ -87,6 +87,16 @@ TEST_CASE("tokens initialize correctly", "[token]") {
         REQUIRE(t.to_string() == "scan@(0:10)");
     }
     
+    SECTION("; token prints correctly") {
+        t.kind = SEMI_COLON;
+        REQUIRE(t.to_string() == ";@(0:10)");
+    }
+    
+    SECTION(": token prints correctly") {
+        t.kind = COLON;
+        REQUIRE(t.to_string() == ":@(0:10)");
+    }
+    
     SECTION("( token prints correctly") {
         t.kind = OPEN_PAREN;
         REQUIRE(t.to_string() == "(@(0:10)");

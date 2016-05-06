@@ -156,7 +156,7 @@ bool Scanner::is_symbol(char c) {
     c == '+' || c == '-' || c == '*' ||
     c == '/' || c == '%' || c == '!' ||
     c == '<' || c == '>' || c == '&' ||
-    c == '|' ||c == '\n';
+    c == '|' || c == ':' || c == '\n';
 }
 
 /**
@@ -282,6 +282,7 @@ Token Scanner::handle_symbol() {
         case '{': t.kind = OPEN_CURLY; break;
         case '}': t.kind = CLOSE_CURLY; break;
         case ';': t.kind = SEMI_COLON; break;
+        case ':': t.kind = COLON; break;
         case '=':
             if (position < source_length - 1 && source[position + 1] == '=') {
                 t.kind = EQUALS;

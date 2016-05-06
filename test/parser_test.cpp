@@ -25,6 +25,11 @@ TEST_CASE("parser parses correctly", "[parser]") {
     
     SECTION("simple variable declarations parse correctly") {
         parser_correctness_test_helper("var x = 4");
+        parser_correctness_test_helper("var x: i32 = 4");
+    }
+    
+    SECTION("unassigned variable declarations parse correctly") {
+        parser_correctness_test_helper("var x: i32");
     }
     
     SECTION("signed variable declarations parse correctly") {
@@ -36,6 +41,10 @@ TEST_CASE("parser parses correctly", "[parser]") {
     }
     
     SECTION("simple constant declarations parse correctly") {
+        parser_correctness_test_helper("let x: i32 = 4");
+    }
+    
+    SECTION("annotated simple constant declarations parse correctly") {
         parser_correctness_test_helper("let x = 4");
     }
     
@@ -231,6 +240,10 @@ TEST_CASE("parser throws correctly for variable declarations") {
     
     SECTION("incorrect assign operator") {
         parser_exception_test_helper("var x < 4");
+    }
+    
+    SECTION("unassigned variable without type annotation") {
+        parser_correctness_test_helper("var x");
     }
 }
 

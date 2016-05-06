@@ -38,6 +38,7 @@ enum token_kind {
     OPEN_CURLY,
     CLOSE_CURLY,
     SEMI_COLON,
+    COLON,
     
     ASSIGN,
     PLUS,

@@ -255,6 +255,8 @@ void Parser::set_ast_root(Node *root) {
     }
 }
 
+# pragma mark - Typing
+
 void Parser::check_binary_operator_typing(Token operation_token, ExpressionNode * left, ExpressionNode * right) {
     
     // type mismatch
@@ -266,8 +268,7 @@ void Parser::check_binary_operator_typing(Token operation_token, ExpressionNode 
     if (std::find(BinaryNumberOps.begin(), BinaryNumberOps.end(), operation_token.kind) != BinaryNumberOps.end()
         && (left->type->get_type_kind() != INTEGER_TYPE || right->type->get_type_kind() != INTEGER_TYPE)) {
         
-        // TODO: cannot use operation ___ with non-integer types
-        ErrorHandler::test_error(false);
+        ErrorHandler::operation_type_mismatch(false, operation_token, left->type, right->type);
     }
     
     // if this is a boolean operator and we are not using a boolean -> error
@@ -275,8 +276,7 @@ void Parser::check_binary_operator_typing(Token operation_token, ExpressionNode 
         != BinaryBooleanOps.end() &&
         (left->type->get_type_kind() != BOOLEAN_TYPE || right->type->get_type_kind() != BOOLEAN_TYPE)) {
         
-        // TODO: cannot use operation ___ with non-boolean types
-        ErrorHandler::test_error(false);
+        ErrorHandler::operation_type_mismatch(false, operation_token, left->type, right->type);
     }
 }
 
@@ -286,17 +286,37 @@ void Parser::check_unary_operator_typing(Token operation_token, ExpressionNode *
     if (std::find(UnaryNumberOps.begin(), UnaryNumberOps.end(), operation_token.kind) != UnaryNumberOps.end() &&
         (expression->type->get_type_kind() != INTEGER_TYPE)) {
         
-        // TODO: cannot use operation ___ with non-integer types
-        ErrorHandler::test_error(false);
+        ErrorHandler::illegal_operation_for_type(false, operation_token, expression->type);
     }
     
     // if this is a boolean operator and we are not using a boolean -> error
     if (std::find(UnaryBooleanOps.begin(), UnaryBooleanOps.end(), operation_token.kind) != UnaryBooleanOps.end()
         && (expression->type->get_type_kind() != BOOLEAN_TYPE)) {
         
-        // TODO: cannot use operation ___ with non-boolean types
-        ErrorHandler::test_error(false);
+        ErrorHandler::illegal_operation_for_type(false, operation_token, expression->type);
     }
+}
+
+Type * Parser::get_type_annotation() {
+    // check for type annotation
+    if (optional_match({COLON})) {
+        token_match m = match(IDENTIFIER);
+        
+        Entry * type = find(m.token.identifier);
+        
+        // undeclared identifier
+        if (!no_symbols && type == nullptr) {
+            ErrorHandler::undeclared_identifier(false, m.token);
+        }
+        
+        if (type != nullptr && type->get_entry_kind() != TYPE_ENTRY) {
+            ErrorHandler::identifier_must_be_type(false, m.token);
+        }
+        
+        return dynamic_cast<Type *>(type);
+    }
+    
+    return nullptr;
 }
 
 #pragma mark - Entry
@@ -439,15 +459,40 @@ DeclarationNode * Parser::Declaration() {
 
 
 /**
- *  VariableDeclaration = "var" identifier "=" Expression
+ *  VariableDeclaration = "var" identifier [":" identifier] ["=" Expression]
  */
 DeclarationNode * Parser::VariableDeclaration() {
     match(VAR);
     token_match m = match(IDENTIFIER);
-    match(ASSIGN);
-    ExpressionNode * e = Expression();
     
-    Variable * v = create_variable_entry(m, e == nullptr ? nullptr : e->type);
+    // check for type annotation
+    Type * type_annotation = get_type_annotation();
+    ExpressionNode * e = nullptr;
+    
+    // this means end of definition -> no expression
+    Variable * v = nullptr;
+    if (optional_match(statement_end)) {
+        
+        // error -> no expression without annotation
+        if (!no_symbols && type_annotation == nullptr) {
+            ErrorHandler::non_annotated_variable_must_have_expression(false, m.token);
+        }
+        
+        v = create_variable_entry(m, type_annotation);
+        
+    // otherwise, there should be an expression
+    } else {
+        
+        match(ASSIGN);
+        e = Expression();
+        
+        // check type of annotation if any vs type of expression
+        if (type_annotation != nullptr && *(type_annotation) != *(e->type)) {
+            ErrorHandler::expression_and_annotation_mismatch(false, m.token, type_annotation, e->type);
+        }
+        
+        v = create_variable_entry(m, e == nullptr ? nullptr : e->type);
+    }
     
     if (!no_ast && v != nullptr) {
         
@@ -466,8 +511,17 @@ DeclarationNode * Parser::VariableDeclaration() {
 DeclarationNode * Parser::ConstantDeclaration() {
     match(LET);
     token_match m = match(IDENTIFIER);
+    
+    // check for type annotation
+    Type * type_annotation = get_type_annotation();
+    
     match(ASSIGN);
     ExpressionNode * e = Expression();
+    
+    // check type of annotation if any vs type of expression
+    if (type_annotation != nullptr && *(type_annotation) != *(e->type)) {
+        ErrorHandler::expression_and_annotation_mismatch(false, m.token, type_annotation, e->type);
+    }
     
     Constant *c = create_constant_entry(m, e == nullptr ? nullptr : e->type);
     
@@ -559,6 +613,7 @@ ExpressionNode * Parser::BinaryExpression(int precedence, ExpressionNode * left)
  *  Unary = Primary | UnaryOp Unary
  */
 ExpressionNode * Parser::UnaryExpression() {
+    
     if (!check(UnaryOps)) {
         return Primary();
     }
@@ -680,15 +735,10 @@ InstructionNode * Parser::Instructions() {
         }
         
         // ending file, or end of body is a reason to leave
-        if (check({END_OF_FILE, CLOSE_CURLY})) {
+        if (check({END_OF_FILE, CLOSE_CURLY})) { // TODO: don't think you need curly here...
             break;
         }
 
-        // right here coming off this :if 2 < 4 { let x = 4 } let x = 6
-        // the close curly is matched in "If()"
-        // and it comes out here expecting a new_line or semi_colon
-        // but there is a "let" -> if close_curly beforehand then maybe
-        
         while (optional_match({NEW_LINE, SEMI_COLON})); // TODO: this was changed to while optional_match, that okay??
     }
     
@@ -730,6 +780,28 @@ InstructionNode * Parser::Instruction() {
 }
 
 /**
+ *  Block = “{“ [Instructions] “}”
+ */
+BlockNode * Parser::Block() {
+    BlockNode * block = new BlockNode;
+    
+    match(OPEN_CURLY);
+    optional_match({NEW_LINE});
+    
+    // create new scope for while statement
+    create_scope();
+    
+    block->instructions = Instructions();
+    
+    optional_match({NEW_LINE});
+    match(CLOSE_CURLY);
+    
+    block->scope = close_scope();
+    
+    return block;
+}
+
+/**
  *  If = “if” Expression Block {“else” “if” Expression Block} [“else” Block]
  */
 IfNode * Parser::If() {
@@ -737,11 +809,11 @@ IfNode * Parser::If() {
     
     match(IF);
     
+    Token position = current;
     ExpressionNode * e = Expression();
     
     if (e != nullptr && e->type->get_type_kind() != BOOLEAN_TYPE) {
-        // TODO: expression in if statement must have a boolean type
-        ErrorHandler::test_error(false);
+        ErrorHandler::control_expression_not_boolean(false, position);
     }
     
     if_node->conditions.push_back(e);
@@ -757,11 +829,11 @@ elseif:
         // else if clause
         if (optional_match({IF})) {
             
+            Token position = current;
             ExpressionNode * e = Expression();
             
             if (e != nullptr && e->type->get_type_kind() != BOOLEAN_TYPE) {
-                // TODO: expression in if statement must have a boolean type
-                ErrorHandler::test_error(false);
+                ErrorHandler::control_expression_not_boolean(false, position);
             }
             
             if_node->conditions.push_back(e);
@@ -794,11 +866,12 @@ WhileNode * Parser::While() {
     WhileNode * while_node = new WhileNode;
     
     match(WHILE);
+    
+    Token position = current;
     while_node->condition = Expression();
     
     if (while_node->condition != nullptr && while_node->condition->type->get_type_kind() != BOOLEAN_TYPE) {
-        // TODO: expression in while statement must have a boolean type
-        ErrorHandler::test_error(false);
+        ErrorHandler::control_expression_not_boolean(false, position);
     }
     
     while_node->block = Block();
@@ -913,44 +986,8 @@ ScanNode * Parser::Scan() {
     Variable * variable = dynamic_cast<Variable *>(e);
     VariableNode * variable_node = new VariableNode(variable);
     
-    // attach variable_node to assgin_node
+    // attach variable_node to assign_node
     scan_node->location = variable_node;
     
     return scan_node;
 }
-
-/**
- *  Block = “{“ [Instructions] “}”
- */
-BlockNode * Parser::Block() {
-    BlockNode * block = new BlockNode;
-    
-    match(OPEN_CURLY);
-    optional_match({NEW_LINE});
-    
-    // create new scope for while statement
-    create_scope();
-    
-    block->instructions = Instructions();
-    
-    optional_match({NEW_LINE});
-    match(CLOSE_CURLY);
-    
-    block->scope = close_scope();
-    
-    return block;
-}
-
-/**
- *  Condition = Expression (“==“ | “!=“ | “<“ | “<=“ | “>” | “>=“) Expression
- */
-//ConditionNode * Parser::Condition() {
-//    
-//    ConditionNode *condition = new ConditionNode;
-//    condition->left = Expression();
-//    // maybe change into checks and if not, send a custom error "missing condition"
-//    condition->operation = match(this->conditions).token.kind;
-//    condition->right = Expression();
-//    
-//    return condition;
-//}

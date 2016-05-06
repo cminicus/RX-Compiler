@@ -32,12 +32,17 @@ public:
     // symbol table
     static std::string duplicate_identifier(bool, Token, Entry *);
     static std::string undeclared_identifier(bool, Token);
+    static std::string identifier_must_be_type(bool, Token);
     
     // ast
     static std::string non_variable_assignment(bool, Token);
     static std::string illegal_operation_for_type(bool, Token, Type *);
     static std::string operation_type_mismatch(bool, Token, Type *, Type *);
     static std::string incompatible_assignment(bool, Token, Type *);
+    static std::string non_annotated_variable_must_have_expression(bool, Token);
+    static std::string expression_and_annotation_mismatch(bool, Token, Type *, Type *);
+    static std::string control_expression_not_boolean(bool, Token);
+    
     
     static std::string test_error(bool);
     

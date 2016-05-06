@@ -25,6 +25,7 @@ std::map<token_kind, std::string> Token::mapping = {
     {OPEN_CURLY, "{"},
     {CLOSE_CURLY, "}"},
     {SEMI_COLON, ";"},
+    {COLON, ":"},
     
     {ASSIGN, "="},
     {PLUS, "+"},

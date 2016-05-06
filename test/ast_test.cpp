@@ -69,6 +69,14 @@ TEST_CASE("parser with AST parses correctly") {
         ast_correctness_test_helper("var x = 1 < 2; x = true");
     }
     
+    SECTION("type annotation parse correctly") {
+        ast_correctness_test_helper("var x: bool; x = false");
+        ast_correctness_test_helper("var x: i32; x = 34");
+        
+        ast_correctness_test_helper("let x: bool = false");
+        ast_correctness_test_helper("let x: i32 = 34");
+    }
+    
     SECTION("boolean operators parse correctly") {
         ast_correctness_test_helper("var x = true == false");
         ast_correctness_test_helper("var x = false != true");
@@ -98,6 +106,16 @@ TEST_CASE("parser with AST throws correctly") {
     
     SECTION("non variable scan throws correctly") {
         ast_exception_test_helper("let x = 4; scan(x)");
+    }
+    
+    SECTION("type annotated variable and expression mistmatch") {
+        ast_exception_test_helper("var x: i32 = true");
+        ast_exception_test_helper("let x: i32 = true");
+        ast_exception_test_helper("var x: i32; x = false");
+    }
+    
+    SECTION("annotated identifier is not a type") {
+        ast_exception_test_helper("var x: y = true");
     }
     
     SECTION("illegal operation for type throws correctly") {

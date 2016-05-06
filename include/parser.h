@@ -40,6 +40,10 @@ private:
         IF, WHILE, IDENTIFIER, PRINT, SCAN, VAR, LET
     };
     
+    std::vector<token_kind> statement_end = {
+        NEW_LINE, SEMI_COLON, END_OF_FILE
+    };
+    
     std::vector<token_kind> RelOps = {
         EQUALS, NOT_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
         GREATER_THAN, GREATER_THAN_EQUALS
@@ -118,6 +122,8 @@ private:
     bool check(std::vector<token_kind>);
     void sync(std::vector<token_kind>);
     int get_token_precedence(Token);
+    Type * get_type_annotation();
+    
     
     // Symbol Table Functions
     void create_scope();
