@@ -2,13 +2,11 @@
 
 ## Description
 
-This project is a toy compiler for a language currently called RX. It is written purely in C++ and from the ground up without using any tools such as Lex/Yacc and others. I'm writing this compiler mostly for fun and to see how programming languages are designed and implemented.
-
-The compiler is written purely in C++ and the entire front end is hand-written (without using tools such as Lex/Yacc etc). The back end targets the LLVM IR for the sake of not having to write several different backends to make the language portable. As an added bonus, LLVM worries about assembly optimizations, allowing me to focus on the front-end fun stuff.
+The compiler is written purely in C++ and the entire front end is hand-written (without using tools such as Lex/Yacc etc). The back end targets the LLVM IR for the sake of not having to write several different backends to make the language portable. As an added bonus, LLVM worries about assembly optimizations, allowing me to focus on the front-end and seeing how languages are designed and implemented.
 
 ## Current State
 
-Currently I'm working on finishing the RX compiler while finishing my Compilers course. I'm implementing the compiler for the features shown below. After finishing the compiler version, I'm going to add features in the future plans section to it.
+Currently, all stages of the compiler are completed. The compiler will be evolving as I add features listed under future plans.
 
 ### Compiler
 - Scanner
@@ -19,71 +17,16 @@ Currently I'm working on finishing the RX compiler while finishing my Compilers 
 
 ### Grammar
 
-- Constant declarations 
-
-``` 
-let x = 4
-```
-
-- Variable declarations
-
-```
-var y = 4
-```
-
-- No semi-colons needed
-
-```
-let x = 4
-var y = 4
-```
-
-- Variable assignments
-
-```
-var x = 4
-x = 10
-```
-
-- If statements
-
-```
-if x < 4 {
-
-} else if x > 4 {
-
-} else {
-
-}
-```
-
-- While statements
-
-```
-while x < 4 {
-	
-}
-```
-
-- Print statements
-
-```
-print(x)
-```
-
-- Scan statements
-
-```
-scan(x)
-```
+Since this project will be changing constantly, I have made links to some google docs containing descriptions of hte language. The grammar can be found [here](https://docs.google.com/document/d/1oqIxKk8QCNCo-nlTMeSKrSpOvsPqV8-2PxNliDj9Muo/edit?usp=sharing), the language semantics can be found [here](https://docs.google.com/document/d/1n4kBa3Ji_uIQjQWdtNBeYSx-AWsPXU9Hs3eer81bGlw/edit?usp=sharing), and some code snippets can be found [here](https://docs.google.com/document/d/1lDM7neo3r-abarKH66YbxOhAkQi3OqLYjAlQpDsl1No/edit?usp=sharing)
 
 ### Types
 
 - Integer literals
+- Boolean literals
 
 ### Functionality
 
-- Mathematical operators
+- Mathematical and relational operators
 - If statements and while loop
 - Variable declarations (both constant and variable)
 
