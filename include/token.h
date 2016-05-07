@@ -29,6 +29,7 @@ enum token_kind {
     IF,
     ELSE,
     WHILE,
+    FOR,
     PRINT,
     SCAN,
     
@@ -39,6 +40,7 @@ enum token_kind {
     CLOSE_CURLY,
     SEMI_COLON,
     COLON,
+    COMMA,
     
     ASSIGN,
     PLUS,

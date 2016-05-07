@@ -45,14 +45,6 @@ private:
     
     void generate_block(BlockNode *);
     
-    void generate_instruction(InstructionNode *);
-    void generate_if(IfNode *);
-    void generate_while(WhileNode *);
-    void generate_assign(AssignNode *);
-    void generate_declaration(DeclarationNode *);
-    void generate_print(PrintNode *);
-    void generate_scan(ScanNode *);
-    
     llvm::Value * generate_expression(ExpressionNode *);
     llvm::Value * generate_number(NumberNode *);
     llvm::Value * generate_boolean(BooleanNode *);
@@ -61,6 +53,14 @@ private:
     llvm::Value * generate_location(LocationNode *);
     llvm::Value * generate_variable(VariableNode *);
     llvm::Value * generate_constant(ConstantNode *);
+    
+    llvm::Value * generate_instruction(InstructionNode *);
+    llvm::Value * generate_if(IfNode *);
+    llvm::Value * generate_while(WhileNode *);
+    llvm::Value * generate_assign(BinaryNode *);
+    llvm::Value * generate_declaration(DeclarationNode *);
+    llvm::Value * generate_print(PrintNode *);
+    llvm::Value * generate_scan(ScanNode *);
     
     // utility functions
     llvm::Type * get_llvm_type(Type *);

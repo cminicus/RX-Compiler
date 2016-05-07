@@ -17,17 +17,19 @@ enum expression_kind {
     BOOLEAN_LITERAL,
     BINARY_EXPRESSION,
     UNARY_EXPRESSION,
-    LOCATION_EXPRESSION
+    LOCATION_EXPRESSION,
+    INSTRUCTION_EXPRESSION
 };
 
 class ExpressionNode: public Node {
 public:
-    ExpressionNode() : type(nullptr) {}
+    ExpressionNode() : type(nullptr), next(nullptr) {}
     ~ExpressionNode() {} // see if type points to symbol_table
     node_kind get_node_kind() { return EXPRESSION_NODE; }
     virtual expression_kind get_expression_kind() = 0;
     
     Type * type;
+    ExpressionNode * next;
 };
 
 #endif /* expression_node_h */

@@ -17,6 +17,7 @@ std::map<token_kind, std::string> Token::mapping = {
     {IF, "if"},
     {ELSE, "else"},
     {WHILE, "while"},
+    {FOR, "for"},
     {PRINT, "print"},
     {SCAN, "scan"},
     
@@ -26,6 +27,7 @@ std::map<token_kind, std::string> Token::mapping = {
     {CLOSE_CURLY, "}"},
     {SEMI_COLON, ";"},
     {COLON, ":"},
+    {COMMA, ","},
     
     {ASSIGN, "="},
     {PLUS, "+"},

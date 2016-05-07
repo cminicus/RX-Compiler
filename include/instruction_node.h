@@ -9,7 +9,7 @@
 #ifndef instruction_node_h
 #define instruction_node_h
 
-#include "node.h"
+#include "expression_node.h"
 
 enum instruction_kind {
     IF_INSTRUCTION,
@@ -20,14 +20,12 @@ enum instruction_kind {
     DECLARATION_INSTRUCTION
 };
 
-class InstructionNode: public Node {
+//class InstructionNode: public Node {
+class InstructionNode: public ExpressionNode {
 public:
-    InstructionNode() : next(nullptr) {}
-    ~InstructionNode() { delete next; }
-    node_kind get_node_kind() { return INSTRUCTION_NODE; }
+    InstructionNode() {}
+    expression_kind get_expression_kind() { return INSTRUCTION_EXPRESSION; }
     virtual instruction_kind get_instruction_kind() = 0;
-    
-    InstructionNode * next;
 };
 
 #endif /* instruction_node_h */

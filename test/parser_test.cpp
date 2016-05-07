@@ -174,6 +174,34 @@ TEST_CASE("parser parses correctly", "[parser]") {
                                 "}");
     }
     
+    // ------------------------------- For -------------------------------------
+    
+    SECTION("full for statements parse correctly") {
+        parser_correctness_test_helper("for var i = 0; i < 10; i = i + 1 { print(i) }");
+        parser_correctness_test_helper("for i = 0; i < 10; i = i + 1 { print(i) }");
+    }
+    
+    SECTION("no-increment for statements parse correctly") {
+        parser_correctness_test_helper("for var i = 0; i < 10; { print(i) }");
+        parser_correctness_test_helper("for i = 0; i < 10; { print(i) }");
+    }
+    
+    SECTION("no-condition for statements parse correctly") {
+        parser_correctness_test_helper("for var i = 0;; i = i + 1 { print(i) }");
+        parser_correctness_test_helper("for i = 0;; i = i + 1 { print(i) }");
+    }
+    
+    SECTION("no-initialization for statements parse correctly") {
+        parser_correctness_test_helper("for ; i < 10; i = i + 1 { print(i) }");
+    }
+    
+    SECTION("multi-incomplete for statements parse correctly") {
+        parser_correctness_test_helper("for var i = 0;; { print(i) }");
+        parser_correctness_test_helper("for ; i < 10; { print(i) }");
+        parser_correctness_test_helper("for ;; i = i + 1 { print(i) }");
+        parser_correctness_test_helper("for ;; { print(i) }");
+    }
+    
     // ---------------------------- Read/Print ---------------------------------
     
     SECTION("print statements parse numbers correctly") {
@@ -365,10 +393,6 @@ TEST_CASE("parser throws correctly for while statements") {
 
 TEST_CASE("parser throws correctly for print statements") {
     
-    SECTION("missing print") {
-        parser_exception_test_helper("(y)");
-    }
-    
     SECTION("missing opening parenthesis") {
         parser_exception_test_helper("printy)");
     }
@@ -383,10 +407,6 @@ TEST_CASE("parser throws correctly for print statements") {
 }
 
 TEST_CASE("parser throws correctly for scan statements") {
-    
-    SECTION("missing scan") {
-        parser_exception_test_helper("(y)");
-    }
     
     SECTION("missing opening parenthesis") {
         parser_exception_test_helper("scany)");

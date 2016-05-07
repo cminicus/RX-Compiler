@@ -22,10 +22,6 @@ public:
             delete (*it);
         }
         
-//        for (auto it = instructions.begin(); it != instructions.end(); ++it) {
-//            delete (*it);
-//        }
-        
         for (auto it = blocks.begin(); it != blocks.end(); ++it) {
             delete (*it);
         }

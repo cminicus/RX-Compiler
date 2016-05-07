@@ -72,6 +72,11 @@ TEST_CASE("tokens initialize correctly", "[token]") {
         REQUIRE(t.to_string() == "else@(0:10)");
     }
     
+    SECTION("for token prints correctly") {
+        t.kind = FOR;
+        REQUIRE(t.to_string() == "for@(0:10)");
+    }
+    
     SECTION("while token prints correctly") {
         t.kind = WHILE;
         REQUIRE(t.to_string() == "while@(0:10)");
@@ -95,6 +100,11 @@ TEST_CASE("tokens initialize correctly", "[token]") {
     SECTION(": token prints correctly") {
         t.kind = COLON;
         REQUIRE(t.to_string() == ":@(0:10)");
+    }
+    
+    SECTION(", token prints correctly") {
+        t.kind = COMMA;
+        REQUIRE(t.to_string() == ",@(0:10)");
     }
     
     SECTION("( token prints correctly") {

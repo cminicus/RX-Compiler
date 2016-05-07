@@ -63,7 +63,13 @@ Parser::Parser(Scanner &scanner, SymbolTable *symbol_table, AST *ast) :
  *  Begins parsing by calling the first function of the grammar
  */
 void Parser::parse() {
-    Statements();
+    ExpressionNode * root = Statements();
+    
+    // set root node for the ast
+    set_ast_root(root);
+    
+    // only throws errors if any have been flagged
+    ErrorHandler::throw_errors();
 }
 
 #pragma mark - Utility
@@ -385,83 +391,125 @@ Constant * Parser::create_constant_entry(token_match match, Type * type) {
 // ----------------------------- Grammar Functions -----------------------------
 
 /**
- *  Statements = {Instructions}
+ *  Statements = {Statement {{";" | "\n"} Statement}}
  */
-void Parser::Statements() {
+ExpressionNode * Parser::Statements() {
     
-    InstructionNode * root = nullptr;
-    InstructionNode * current_node = nullptr;
+    ExpressionNode * root = nullptr;
+    ExpressionNode * current_node = nullptr;
     
     while (current.kind != END_OF_FILE) {
         
-        // first thing has to be an instruction or the file is empty
-        if (!check(this->instructions)) {
-            
-            // if we miss an instruction, sync until we do
-            ErrorHandler::expected_instruction(false, current);
-            sync(this->instructions);
+        // statements can be ended be a closed curly because they are optional
+        // if x == 5 {~statements~}
+        if (check({CLOSE_CURLY})) {
+            break;
         }
         
         if (no_ast) {
-            Instructions();
-            
+            Statement();
         } else {
+            
             if (root == nullptr) {
-                root = Instructions();
+                root = Statement();
                 current_node = root;
                 
-                if (current_node == nullptr) {
-                    continue;
-                }
-                
-                // move current node to the end of the instruction list
-                while (current_node->next != nullptr) {
-                    current_node = current_node->next;
-                }
-                
+//                if (current_node == nullptr) {
+//                    continue;
+//                }
+
             } else {
-                current_node->next = Instructions();
-                
-                // move current node to the end of the instruction list
-                while (current_node->next != nullptr) {
-                    current_node = current_node->next;
-                }
+                current_node->next = Statement();
             }
         }
+        
+        if (check({CLOSE_CURLY, END_OF_FILE})) {
+            break;
+        }
+        
+        if (!optional_match(file_end)) {
+            // error -> expected end of statement or end of file
+            ErrorHandler::test_error(false);
+            sync(statement_end);
+        }
+        
+        while (optional_match(statement_end)); // eat all statement end tokens
+        
+        // first thing has to be an instruction or the file is empty
+//        if (!check(this->instructions)) {
+//            
+//            // if we miss an instruction, sync until we do
+//            ErrorHandler::expected_instruction(false, current);
+//            sync(this->instructions);
+//        }
+//
+//        if (no_ast) {
+//            Instructions();
+//            
+//        } else {
+//            if (root == nullptr) {
+//                root = Instructions();
+//                current_node = root;
+//                
+//                if (current_node == nullptr) {
+//                    continue;
+//                }
+//                
+//                // move current node to the end of the instruction list
+//                while (current_node->next != nullptr) {
+//                    current_node = current_node->next;
+//                }
+//                
+//            } else {
+//                current_node->next = Instructions();
+//                
+//                // move current node to the end of the instruction list
+//                while (current_node->next != nullptr) {
+//                    current_node = current_node->next;
+//                }
+//            }
+//        }
     }
     
-    // set root node for the ast
-    set_ast_root(root);
+    return root;
+}
+
+/**
+ *  Statement = {Declaration | Expression}
+ */
+ExpressionNode * Parser::Statement() {
     
-    // only throws errors if any have been flagged
-    ErrorHandler::throw_errors();
+    // declarations
+    if (check({VAR, LET})) {
+        return Declaration();
+        
+    // expressions
+    } else {
+        return Expression();
+    }
 }
 
 /**
  *  Declaration = VariableDeclaration | ConstantDeclaration
  */
-DeclarationNode * Parser::Declaration() {
-    // right now you can correctly declare a variable called "int"
-    // have a list of types potentially in the symbol_table and always
-    // check against that in any declaration (even if not local)
-    
-    DeclarationNode * node = nullptr;
+ExpressionNode * Parser::Declaration() {
     
     if (check({VAR})) {
-        node = VariableDeclaration();
+        return VariableDeclaration();
         
     } else if (check({LET})) {
-        node = ConstantDeclaration();
+        return ConstantDeclaration();
     }
-    
-    return node;
+
+    return nullptr;
 }
 
 
 /**
  *  VariableDeclaration = "var" identifier [":" identifier] ["=" Expression]
  */
-DeclarationNode * Parser::VariableDeclaration() {
+ExpressionNode * Parser::VariableDeclaration() {
+    
     match(VAR);
     token_match m = match(IDENTIFIER);
     
@@ -471,7 +519,7 @@ DeclarationNode * Parser::VariableDeclaration() {
     
     // this means end of definition -> no expression
     Variable * v = nullptr;
-    if (optional_match(statement_end)) {
+    if (check(file_end)) { // only check, the actual parsing of this is handled in statements
         
         // error -> no expression without annotation
         if (!no_symbols && type_annotation == nullptr) {
@@ -497,9 +545,7 @@ DeclarationNode * Parser::VariableDeclaration() {
     if (!no_ast && v != nullptr) {
         
         VariableNode * variable = new VariableNode(v);
-        DeclarationNode * declaration = new DeclarationNode(variable, e); // location, expression
-        
-        return declaration;
+        return new BinaryNode(ASSIGN, variable, e); // operation, location, expression
     }
     
     return nullptr;
@@ -508,7 +554,7 @@ DeclarationNode * Parser::VariableDeclaration() {
 /**
  *  ConstantDeclaration = "let" identifier "=" Expression
  */
-DeclarationNode * Parser::ConstantDeclaration() {
+ExpressionNode * Parser::ConstantDeclaration() {
     match(LET);
     token_match m = match(IDENTIFIER);
     
@@ -523,14 +569,12 @@ DeclarationNode * Parser::ConstantDeclaration() {
         ErrorHandler::expression_and_annotation_mismatch(false, m.token, type_annotation, e->type);
     }
     
-    Constant *c = create_constant_entry(m, e == nullptr ? nullptr : e->type);
+    Constant * c = create_constant_entry(m, e == nullptr ? nullptr : e->type);
     
     if (!no_ast && c != nullptr) {
         
         ConstantNode * constant = new ConstantNode(c);
-        DeclarationNode * declaration = new DeclarationNode(constant, e);  // location, expression
-        
-        return declaration;
+        return new BinaryNode(ASSIGN, constant, e); // operation, location, expression
     }
     
     return nullptr;
@@ -542,6 +586,10 @@ DeclarationNode * Parser::ConstantDeclaration() {
 ExpressionNode * Parser::Expression() {
     
     ExpressionNode * left = UnaryExpression();
+    
+    if (check({ASSIGN})) {
+        return Assign(left);
+    }
     
     if (check(BinaryOps)) {
         return BinaryExpression(0, left);
@@ -634,7 +682,7 @@ ExpressionNode * Parser::UnaryExpression() {
 }
 
 /**
- *  Primary = integer | boolean | identifier | “(“ Expression “)”
+ *  Primary = integer | boolean | identifier | "(" Expression ")" | Instruction
  */
 ExpressionNode * Parser::Primary() {
     
@@ -707,46 +755,56 @@ ExpressionNode * Parser::Primary() {
         
         return e;
         
+    // TODO: make this end of file and all special symbols d
+    } else if (check({END_OF_FILE, EQUALS, OPEN_CURLY, CLOSE_PAREN})) {
+        
+        // shouldn't ever hit end of file here
+        ErrorHandler::test_error(false);
+        return nullptr;
+        
     } else {
         // this will throw the incorrect match error for us
         // probably not the best error though
-        match({INTEGER, TRUE_TOK, FALSE_TOK, IDENTIFIER, OPEN_PAREN});
+//        match({INTEGER, TRUE_TOK, FALSE_TOK, IDENTIFIER, OPEN_PAREN});
+        
+        // otherwise, the expression is an instruction
+        return Instruction();
     }
     
     return nullptr;
 }
 
 /**
- *  Instructions = Instruction {{“;” | “\\n”} Instruction}
+ *  Instructions = Instruction {{";" | "\\n"} Instruction}
  */
 InstructionNode * Parser::Instructions() {
     
     InstructionNode * instructions = nullptr;
-    InstructionNode * current_instruction = nullptr;
-    
-    while (check(this->instructions)) {
-        
-        if (instructions == nullptr) {
-            instructions = Instruction();
-            current_instruction = instructions;
-        } else {
-            current_instruction->next = Instruction();
-            current_instruction = current_instruction->next;
-        }
-        
-        // ending file, or end of body is a reason to leave
-        if (check({END_OF_FILE, CLOSE_CURLY})) { // TODO: don't think you need curly here...
-            break;
-        }
-
-        while (optional_match({NEW_LINE, SEMI_COLON})); // TODO: this was changed to while optional_match, that okay??
-    }
+//    InstructionNode * current_instruction = nullptr;
+//    
+//    while (check(this->instructions)) {
+//        
+//        if (instructions == nullptr) {
+//            instructions = Instruction();
+//            current_instruction = instructions;
+//        } else {
+//            current_instruction->next = Instruction();
+//            current_instruction = current_instruction->next;
+//        }
+//        
+//        // ending file, or end of body is a reason to leave
+//        if (check({END_OF_FILE, CLOSE_CURLY})) { // TODO: don't think you need curly here...
+//            break;
+//        }
+//
+//        while (optional_match({NEW_LINE, SEMI_COLON})); // TODO: this was changed to while optional_match, that okay??
+//    }
     
     return instructions;
 }
 
 /**
- *  Instruction = If | While | Assign | Print | Scan | Declaration
+ *  Instruction = If | While | Print | Scan
  */
 InstructionNode * Parser::Instruction() {
     
@@ -758,8 +816,9 @@ InstructionNode * Parser::Instruction() {
     } else if (check({WHILE})) {
         instruction_node = While();
         
-    } else if (check({IDENTIFIER})) {
-        instruction_node = Assign();
+    } else if (check({FOR})) {
+        For();
+//        instruction_node = For();
         
     } else if (check({PRINT})) {
         instruction_node = Print();
@@ -767,20 +826,17 @@ InstructionNode * Parser::Instruction() {
     } else if (check({SCAN})) {
         instruction_node = Scan();
         
-    } else if (check({VAR, LET})) {
-        instruction_node = Declaration();
-        
     } else {
         // this is handled outside of here
-        ErrorHandler::expected_instruction(false, current);
-        sync(this->instructions);
+//        ErrorHandler::expected_instruction(false, current);
+//        sync(this->instructions);
     }
     
     return instruction_node;
 }
 
 /**
- *  Block = “{“ [Instructions] “}”
+ *  Block = "{" [Statements] "}"
  */
 BlockNode * Parser::Block() {
     BlockNode * block = new BlockNode;
@@ -791,7 +847,7 @@ BlockNode * Parser::Block() {
     // create new scope for while statement
     create_scope();
     
-    block->instructions = Instructions();
+    block->expressions = Statements();
     
     optional_match({NEW_LINE});
     match(CLOSE_CURLY);
@@ -802,7 +858,7 @@ BlockNode * Parser::Block() {
 }
 
 /**
- *  If = “if” Expression Block {“else” “if” Expression Block} [“else” Block]
+ *  If = "if" Expression Block {"else" "if" Expression Block} ["else" Block]
  */
 IfNode * Parser::If() {
     IfNode * if_node = new IfNode;
@@ -860,7 +916,7 @@ elseif:
 }
 
 /**
- *  While = “while” Expression Block
+ *  While = "while" Expression Block
  */
 WhileNode * Parser::While() {
     WhileNode * while_node = new WhileNode;
@@ -885,51 +941,113 @@ WhileNode * Parser::While() {
 }
 
 /**
- *  Assign = identifier “=“ Expression
+ *  For = "for" [Instruction] ";" [Expression] ";" [Instruction] Block
  */
-AssignNode * Parser::Assign() {
+void Parser::For() {
+    match(FOR);
     
-    token_match m = match(IDENTIFIER);
-    match(ASSIGN);
-    ExpressionNode * expression = Expression();
-    
-    if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
-        ErrorHandler::undeclared_identifier(false, m.token);
-        // maybe return here
+    // initializer instruction list
+    if (!check({SEMI_COLON})) {
+        
+        ExpressionNode * e = Statement(); // could be a declaration, eventually change to exp, varDecl, constDecl
+        // else if (no_ast) { ErrorHandler::test_error(false); }
+        if (BinaryNode * binary = dynamic_cast<BinaryNode *>(e)) {
+            // binary node must be assign
+            if (binary->operation != ASSIGN) {
+                ErrorHandler::test_error(false);
+            }
+            
+        } else if (!no_ast) {
+            // must be an assignment node (binary)
+            ErrorHandler::test_error(false);
+        }
+
+        // check for var/let and if so -> declaration instruciton,
+        // otherwise expression (where x = 1 is an expression (assignment should be binary operator)
     }
     
-    Entry * e = find(m.token.identifier);
+    match(SEMI_COLON);
+    
+    // condition expression list
+    if (!check({SEMI_COLON})) {
+        ExpressionNode * e = Expression();
+        
+        // must be a boolean literal/expression
+        if (e != nullptr && e->type->get_type_kind() != BOOLEAN_TYPE) {
+            
+            ErrorHandler::test_error(false);
+        }
+    }
+    
+    match(SEMI_COLON);
+    
+    // increment instruction list
+    if (!check({OPEN_CURLY})) {
+        Expression(); // this is an expression (assignment is a binary operation)
+    }
+    
+    Block();
+}
+
+/**
+ *  Assign = identifier "=" Expression
+ */
+ExpressionNode * Parser::Assign(ExpressionNode * left) {
+    
+//    token_match m = match(IDENTIFIER);
+    Token t = last;
+    match(ASSIGN);
+    
+    ExpressionNode * expression = Expression();
+    
+    VariableNode * variable = dynamic_cast<VariableNode *>(left);
+    if (!no_ast && variable == nullptr) {
+        ErrorHandler::non_variable_assignment(false, t);
+        return nullptr;
+    }
+    
+    
+//    if (!no_symbols && m.is_valid && !find(m.token.identifier)) {
+//        ErrorHandler::undeclared_identifier(false, m.token);
+//        // maybe return here
+//    }
+    
+//    Entry * e = find(m.token.identifier);
     
     // leave if not using ast
     if (no_ast) {
         return nullptr;
     }
     
-    if (e == nullptr || e->get_entry_kind() != VARIABLE_ENTRY) {
-        ErrorHandler::non_variable_assignment(false, m.token);
-        return nullptr;
-    }
+//    if (e == nullptr || e->get_entry_kind() != VARIABLE_ENTRY) {
+//        ErrorHandler::non_variable_assignment(false, m.token);
+//        return nullptr;
+//    }
     
-    AssignNode * assign_node = new AssignNode;
-    assign_node->expression = expression;
-    
-    // cast entry to a variable and make a variable_node
-    Variable * variable = dynamic_cast<Variable *>(e);
-    VariableNode * variable_node = new VariableNode(variable);
+//    AssignNode * assign_node = new AssignNode;
+//    assign_node->expression = expression;
+//    
+//    // cast entry to a variable and make a variable_node
+//    Variable * variable = dynamic_cast<Variable *>(e);
+//    VariableNode * variable_node = new VariableNode(variable);
     
     // make sure types match
-    if (*(variable_node->type) != *(assign_node->expression->type)) {
-        ErrorHandler::incompatible_assignment(false, m.token, assign_node->expression->type);
+//    if (*(variable_node->type) != *(assign_node->expression->type)) {
+//        ErrorHandler::incompatible_assignment(false, m.token, assign_node->expression->type);
+//    }
+    
+    if (*(left->type) != *(expression->type)) {
+        ErrorHandler::incompatible_assignment(false, last, expression->type);
     }
     
     // attach variable_node to assgin_node
-    assign_node->location = variable_node;
-    
-    return assign_node;
+//    assign_node->location = variable_node;
+    return new BinaryNode(ASSIGN, left, expression);
+//    return assign_node;
 }
 
 /**
- *  Print = “print” “(“ Expression “)”
+ *  Print = "print" "(" Expression ")"
  */
 PrintNode * Parser::Print() {
     
@@ -950,7 +1068,7 @@ PrintNode * Parser::Print() {
 
 
 /**
- *  Scan = “scan” “(“ identifier “)”
+ *  Scan = "scan" "(" identifier ")"
  */
 ScanNode * Parser::Scan() {
     

@@ -37,10 +37,14 @@ private:
     bool no_ast = false;
     
     std::vector<token_kind> instructions = {
-        IF, WHILE, IDENTIFIER, PRINT, SCAN, VAR, LET
+        IF, WHILE, FOR, IDENTIFIER, PRINT, SCAN, VAR, LET
     };
     
     std::vector<token_kind> statement_end = {
+        NEW_LINE, SEMI_COLON
+    };
+    
+    std::vector<token_kind> file_end = {
         NEW_LINE, SEMI_COLON, END_OF_FILE
     };
     
@@ -112,6 +116,9 @@ private:
         
         // Disjunctive
         {Token::mapping[LOGICAL_OR],  110},
+        
+        // Assignment
+        {Token::mapping[ASSIGN],  90},
     };
     
     // Utilities
@@ -142,11 +149,12 @@ private:
     Constant * create_constant_entry(token_match, Type *);
     
     // Grammar Functions
-    void Statements();
+    ExpressionNode * Statements();
+    ExpressionNode * Statement();
     
-    DeclarationNode * Declaration();
-    DeclarationNode * VariableDeclaration();
-    DeclarationNode * ConstantDeclaration();
+    ExpressionNode * Declaration();
+    ExpressionNode * VariableDeclaration();
+    ExpressionNode * ConstantDeclaration();
     
     ExpressionNode * Expression();
     ExpressionNode * BinaryExpression(int, ExpressionNode *);
@@ -155,13 +163,13 @@ private:
     
     InstructionNode * Instructions();
     InstructionNode * Instruction();
+    BlockNode * Block();
     IfNode * If();
     WhileNode * While();
-    AssignNode * Assign();
+    void For();
+    ExpressionNode * Assign(ExpressionNode *);
     PrintNode * Print();
     ScanNode * Scan();
-    
-    BlockNode * Block();
 };
 
 #endif /* parser_h */

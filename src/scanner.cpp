@@ -156,7 +156,8 @@ bool Scanner::is_symbol(char c) {
     c == '+' || c == '-' || c == '*' ||
     c == '/' || c == '%' || c == '!' ||
     c == '<' || c == '>' || c == '&' ||
-    c == '|' || c == ':' || c == '\n';
+    c == '|' || c == ':' || c == ',' ||
+    c == '\n';
 }
 
 /**
@@ -170,7 +171,8 @@ bool Scanner::is_keyword(std::string s) {
     return
     s == "var" || s == "let" || s == "true" ||
     s == "false" || s == "if" || s == "else" ||
-    s == "while" || s == "print" || s == "scan";
+    s == "while" || s == "for" ||
+    s == "print" || s == "scan";
 }
 
 /**
@@ -254,6 +256,8 @@ Token Scanner::handle_keyword(Token t, std::string s) {
         t.kind = IF;
     } else if (s == "else") {
         t.kind = ELSE;
+    } else if (s == "for") {
+        t.kind = FOR;
     } else if (s == "while") {
         t.kind = WHILE;
     } else if (s == "print") {
@@ -283,6 +287,7 @@ Token Scanner::handle_symbol() {
         case '}': t.kind = CLOSE_CURLY; break;
         case ';': t.kind = SEMI_COLON; break;
         case ':': t.kind = COLON; break;
+        case ',': t.kind = COMMA; break;
         case '=':
             if (position < source_length - 1 && source[position + 1] == '=') {
                 t.kind = EQUALS;

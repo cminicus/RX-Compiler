@@ -15,12 +15,12 @@
 
 class BlockNode: public Node {
 public:
-    BlockNode() {}
-    ~BlockNode() { delete instructions; delete scope; }
+    BlockNode() : expressions(nullptr), scope(nullptr) {}
+    ~BlockNode() { delete expressions; delete scope; }
     node_kind get_node_kind() { return BLOCK_NODE; }
     
-    InstructionNode * instructions = nullptr;
-    Scope * scope = nullptr;
+    ExpressionNode * expressions;
+    Scope * scope;
 };
 
 #endif /* block_node_h */

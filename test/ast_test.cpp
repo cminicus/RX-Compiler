@@ -72,7 +72,7 @@ TEST_CASE("parser with AST parses correctly") {
     SECTION("type annotation parse correctly") {
         ast_correctness_test_helper("var x: bool; x = false");
         ast_correctness_test_helper("var x: i32; x = 34");
-        
+
         ast_correctness_test_helper("let x: bool = false");
         ast_correctness_test_helper("let x: i32 = 34");
     }
@@ -137,9 +137,7 @@ TEST_CASE("parser with AST throws correctly") {
         ast_exception_test_helper("var x = -false");
         ast_exception_test_helper("var x = -true");
         
-        // "||" binds before "<", so this attempts "3 || false"
         ast_exception_test_helper("var x = 1 < (3 || false)");
-        // "&&" binds before ">=" or "<", so this attempts "4 && 3"
         ast_exception_test_helper("var x = 3 >= (4 && 3) < 4");
         
         ast_exception_test_helper("var x = !1");

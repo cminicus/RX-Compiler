@@ -10,6 +10,25 @@ if 1 < 2 {
     }
 }
 
+for var i = 0; i < 10; i++ {
+
+}
+
+for ; i < 10; i++ {
+
+}
+
+for var i = 0;; i++ {
+    
+}
+
+for ;; i++ {
+
+}
+
+for ;; {
+
+}
 
 let x = Vector<i32>()
 for y in x {
@@ -46,7 +65,7 @@ let i = { (x: i32) -> i32
     x - 4 + 1
 }
 
-i(4)
+let z = i(4)
 
 // brackets delay execution, area = x + y computes it immediately
 struct r = { x: i32, y: i32, area = { x + y } }
@@ -55,16 +74,24 @@ r.area
 
 
 match x with {
-    p: i32 ==> x + 1
+    var p: i32 ==> p + 1
 }
 
 
 // write a verify function for multiple branch control statements to make
 // sure ret type is consistent
-let x = if y < 4 { ret 8 } else { ret 9 }
+let x = if y < 4 { emit 8 } else { emit 9 }
 
 
+let x: [i32] = for var i = 0; i < 10; i++ { if i < 3 { emit i } }
+x -> [0, 1, 2]
 
 
+let y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+let x = for y in array { if y < 3 { emit y } }
+x -> [0, 1, 2]
 
 
+emit keyword will return a value from the control expression
+emit y -> and return
+emit::y -> emit as part of array?

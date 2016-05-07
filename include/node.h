@@ -10,9 +10,8 @@
 #define node_h
 
 enum node_kind {
-    INSTRUCTION_NODE,
+    DECLARATION_NODE,
     EXPRESSION_NODE,
-    CONDITION_NODE,
     BLOCK_NODE
 };
 

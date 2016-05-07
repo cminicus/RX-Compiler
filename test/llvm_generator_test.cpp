@@ -1,184 +1,184 @@
-////
-////  llvm_generator_test.cpp
-////  RX Compiler
-////
-////  Created by Clayton Minicus on 4/22/16.
-////  Copyright © 2016 Clayton Minicus. All rights reserved.
-////
 //
-//#include <stdio.h>
-//#include <sstream>
-//#include <cstdlib>
+//  llvm_generator_test.cpp
+//  RX Compiler
 //
-//#include "catch.hpp"
-//#include "rx_compiler.h"
+//  Created by Clayton Minicus on 4/22/16.
+//  Copyright © 2016 Clayton Minicus. All rights reserved.
 //
-//void code_generator_test_helper(std::string program, std::string output) {
-//    // generate code
-//    RXCompiler compiler(BUILD);
-//    compiler.set_source(program);
-//    
-//    compiler.compile();
-//    
-//    // redirect output to compiler_output.txt
-//    std::system("./a.out > compiler_output.txt");
-//    
-//    // read in compiler_output.txt
-//    std::ifstream input("compiler_output.txt");
-//    std::string file((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-//    
-//    // check that generated output matches expected output
-//    REQUIRE(file == output);
-//    
-//    // remove left over files
-//    std::system("rm a.out && rm compiler_output.txt");
-//}
-//
-//#pragma mark Print Blocks
-//
-//TEST_CASE("print blocks generate correct code") {
-//    
-//    SECTION("print generates constant values correctly") {
-//        std::string program = "print(4)";
-//        code_generator_test_helper(program, "4\n");
-//        
-//        program = "print(-4)";
-//        code_generator_test_helper(program, "-4\n");
-//    }
-//    
-//    SECTION("print generates negative constant values correctly") {
-//        std::string program = "print(-4)";
-//        code_generator_test_helper(program, "-4\n");
-//    }
-//    
-//    SECTION("print generates constant-offset variables correctly") {
-//        std::string program = "var y = 5; print(y)";
-//        code_generator_test_helper(program, "5\n");
-//    }
-//    
-//    SECTION("print generates constant-offset constants correctly") {
-//        std::string program = "let y = 6; print(y)";
-//        code_generator_test_helper(program, "6\n");
-//    }
-//}
-//
-//#pragma mark Binary Blocks
-//
-//TEST_CASE("binary blocks generate correct code") {
-//    
-//    // Addition
-//    
-//    SECTION("constant value additions generates correctly") {
-//        std::string program = "print(4 + 12)";
-//        code_generator_test_helper(program, "16\n");
-//    }
-//    
-//    SECTION("left constant location additions generates correctly") {
-//        std::string program = "let x = 4; print(x + 12)";
-//        code_generator_test_helper(program, "16\n");
-//    }
-//    
-//    SECTION("right constant location additions generates correctly") {
-//        std::string program = "let x = 4; print(12 + x)";
-//        code_generator_test_helper(program, "16\n");
-//    }
-//    
-//    SECTION("all constant location additions generates correctly") {
-//        std::string program = "let x = 4; let y = 12; print(x + y)";
-//        code_generator_test_helper(program, "16\n");
-//    }
-//    
-//    // eventually non-constant variable (a[i])
-//
-//    // Subtraction
-//    
-//    SECTION("constant value subtractions generates correctly") {
-//        std::string program = "print(4 - 12)";
-//        code_generator_test_helper(program, "-8\n");
-//    }
-//    
-//    SECTION("left constant location subtractions generates correctly") {
-//        std::string program = "let x = 4; print(x - 12)";
-//        code_generator_test_helper(program, "-8\n");
-//    }
-//    
-//    SECTION("right constant location subtractions generates correctly") {
-//        std::string program = "let x = 4; print(12 - x)";
-//        code_generator_test_helper(program, "8\n");
-//    }
-//    
-//    SECTION("all constant location subtractions generates correctly") {
-//        std::string program = "let x = 4; let y = 12; print(x - y)";
-//        code_generator_test_helper(program, "-8\n");
-//    }
-//    
-//    // Multiplication
-//    
-//    SECTION("constant value multiplications generates correctly") {
-//        std::string program = "print(4 * 12)";
-//        code_generator_test_helper(program, "48\n");
-//    }
-//    
-//    SECTION("left constant location multiplications generates correctly") {
-//        std::string program = "let x = 4; print(x * 12)";
-//        code_generator_test_helper(program, "48\n");
-//    }
-//    
-//    SECTION("right constant location multiplications generates correctly") {
-//        std::string program = "let x = 4; print(12 * x)";
-//        code_generator_test_helper(program, "48\n");
-//    }
-//    
-//    SECTION("all constant location multiplications generates correctly") {
-//        std::string program = "let x = 4; let y = 12; print(x * y)";
-//        code_generator_test_helper(program, "48\n");
-//    }
-//    
-//    // Operator Precedence
-//    
-//    SECTION("natural precedence generates correctly") {
-//        std::string program = "let x = 4 + 3 * 4 - 8; print(x)";
-//        code_generator_test_helper(program, "8\n");
-//        
-//        program = "let y = 4; let z = 3; let a = 8; let x = y + z * y - a; print(x)";
-//        code_generator_test_helper(program, "8\n");
-//    }
-//    
-//    SECTION("forced precedence generates correctly") {
-//        std::string program = "let x = (4 + 3) * 4 - 8; print(x)";
-//        code_generator_test_helper(program, "20\n");
-//        
-//        program = "let y = 4; let z = 3; let a = 8; let x = (y + z) * y - a; print(x)";
-//        code_generator_test_helper(program, "20\n");
-//        
-//        
-//        program = "let x = 4 + 3 * (4 - 8); print(x)";
-//        code_generator_test_helper(program, "-8\n");
-//        
-//        program = "let y = 4; let z = 3; let a = 8; let x = y + z * (y - a); print(x)";
-//        code_generator_test_helper(program, "-8\n");
-//        
-//
-//        program = "let x = (4 + 3) * (4 - 8); print(x)";
-//        code_generator_test_helper(program, "-28\n");
-//        
-//        program = "let y = 4; let z = 3; let a = 8; let x = (y + z) * (y - a); print(x)";
-//        code_generator_test_helper(program, "-28\n");
-//    }
-//    
-//    // Chained Expressions
-//    
-//    SECTION("chained subtrees generate correctly") {
-//        std::string program =
-//            "print(4 + (3 + (4 + (3 + (4 + (3 + (4 + (3 + (4 + (3 + (4 + 3)))))))))))";
-//        code_generator_test_helper(program, "42\n");
-//        
-//        program =
-//            "let y = 3; let z = 4; print(z + (y + (z + (y + (z + (y + (z + (y + (z + (y + (z + y)))))))))))";
-//        code_generator_test_helper(program, "42\n");
-//    }
-//}
-//
+
+#include <stdio.h>
+#include <sstream>
+#include <cstdlib>
+
+#include "catch.hpp"
+#include "rx_compiler.h"
+
+void code_generator_test_helper(std::string program, std::string output) {
+    // generate code
+    RXCompiler compiler(BUILD);
+    compiler.set_source(program);
+    
+    compiler.compile();
+    
+    // redirect output to compiler_output.txt
+    std::system("./a.out > compiler_output.txt");
+    
+    // read in compiler_output.txt
+    std::ifstream input("compiler_output.txt");
+    std::string file((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    
+    // check that generated output matches expected output
+    REQUIRE(file == output);
+    
+    // remove left over files
+    std::system("rm a.out && rm compiler_output.txt");
+}
+
+#pragma mark Print Blocks
+
+TEST_CASE("print blocks generate correct code") {
+    
+    SECTION("print generates constant values correctly") {
+        std::string program = "print(4)";
+        code_generator_test_helper(program, "4\n");
+        
+        program = "print(-4)";
+        code_generator_test_helper(program, "-4\n");
+    }
+    
+    SECTION("print generates negative constant values correctly") {
+        std::string program = "print(-4)";
+        code_generator_test_helper(program, "-4\n");
+    }
+    
+    SECTION("print generates constant-offset variables correctly") {
+        std::string program = "var y = 5; print(y)";
+        code_generator_test_helper(program, "5\n");
+    }
+    
+    SECTION("print generates constant-offset constants correctly") {
+        std::string program = "let y = 6; print(y)";
+        code_generator_test_helper(program, "6\n");
+    }
+}
+
+#pragma mark Binary Blocks
+
+TEST_CASE("binary blocks generate correct code") {
+    
+    // Addition
+    
+    SECTION("constant value additions generates correctly") {
+        std::string program = "print(4 + 12)";
+        code_generator_test_helper(program, "16\n");
+    }
+    
+    SECTION("left constant location additions generates correctly") {
+        std::string program = "let x = 4; print(x + 12)";
+        code_generator_test_helper(program, "16\n");
+    }
+    
+    SECTION("right constant location additions generates correctly") {
+        std::string program = "let x = 4; print(12 + x)";
+        code_generator_test_helper(program, "16\n");
+    }
+    
+    SECTION("all constant location additions generates correctly") {
+        std::string program = "let x = 4; let y = 12; print(x + y)";
+        code_generator_test_helper(program, "16\n");
+    }
+    
+    // eventually non-constant variable (a[i])
+
+    // Subtraction
+    
+    SECTION("constant value subtractions generates correctly") {
+        std::string program = "print(4 - 12)";
+        code_generator_test_helper(program, "-8\n");
+    }
+    
+    SECTION("left constant location subtractions generates correctly") {
+        std::string program = "let x = 4; print(x - 12)";
+        code_generator_test_helper(program, "-8\n");
+    }
+    
+    SECTION("right constant location subtractions generates correctly") {
+        std::string program = "let x = 4; print(12 - x)";
+        code_generator_test_helper(program, "8\n");
+    }
+    
+    SECTION("all constant location subtractions generates correctly") {
+        std::string program = "let x = 4; let y = 12; print(x - y)";
+        code_generator_test_helper(program, "-8\n");
+    }
+    
+    // Multiplication
+    
+    SECTION("constant value multiplications generates correctly") {
+        std::string program = "print(4 * 12)";
+        code_generator_test_helper(program, "48\n");
+    }
+    
+    SECTION("left constant location multiplications generates correctly") {
+        std::string program = "let x = 4; print(x * 12)";
+        code_generator_test_helper(program, "48\n");
+    }
+    
+    SECTION("right constant location multiplications generates correctly") {
+        std::string program = "let x = 4; print(12 * x)";
+        code_generator_test_helper(program, "48\n");
+    }
+    
+    SECTION("all constant location multiplications generates correctly") {
+        std::string program = "let x = 4; let y = 12; print(x * y)";
+        code_generator_test_helper(program, "48\n");
+    }
+    
+    // Operator Precedence
+    
+    SECTION("natural precedence generates correctly") {
+        std::string program = "let x = 4 + 3 * 4 - 8; print(x)";
+        code_generator_test_helper(program, "8\n");
+        
+        program = "let y = 4; let z = 3; let a = 8; let x = y + z * y - a; print(x)";
+        code_generator_test_helper(program, "8\n");
+    }
+    
+    SECTION("forced precedence generates correctly") {
+        std::string program = "let x = (4 + 3) * 4 - 8; print(x)";
+        code_generator_test_helper(program, "20\n");
+        
+        program = "let y = 4; let z = 3; let a = 8; let x = (y + z) * y - a; print(x)";
+        code_generator_test_helper(program, "20\n");
+        
+        
+        program = "let x = 4 + 3 * (4 - 8); print(x)";
+        code_generator_test_helper(program, "-8\n");
+        
+        program = "let y = 4; let z = 3; let a = 8; let x = y + z * (y - a); print(x)";
+        code_generator_test_helper(program, "-8\n");
+        
+
+        program = "let x = (4 + 3) * (4 - 8); print(x)";
+        code_generator_test_helper(program, "-28\n");
+        
+        program = "let y = 4; let z = 3; let a = 8; let x = (y + z) * (y - a); print(x)";
+        code_generator_test_helper(program, "-28\n");
+    }
+    
+    // Chained Expressions
+    
+    SECTION("chained subtrees generate correctly") {
+        std::string program =
+            "print(4 + (3 + (4 + (3 + (4 + (3 + (4 + (3 + (4 + (3 + (4 + 3)))))))))))";
+        code_generator_test_helper(program, "42\n");
+        
+        program =
+            "let y = 3; let z = 4; print(z + (y + (z + (y + (z + (y + (z + (y + (z + (y + (z + y)))))))))))";
+        code_generator_test_helper(program, "42\n");
+    }
+}
+
 //#pragma mark Assign Blocks
 //
 //TEST_CASE("assign blocks generate correct code") {

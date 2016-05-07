@@ -80,7 +80,7 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
     
     // ------------------------------ Keywords ---------------------------------
     SECTION("scanner scans keywords correctly") {
-        Scanner s("var let if else while print scan true false");
+        Scanner s("var let if else while print scan true false for");
         t = s.next();
         REQUIRE(t.to_string() == "var@(1:1)");
         
@@ -107,11 +107,14 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
         
         t = s.next();
         REQUIRE(t.to_string() == "false@(1:39)");
+        
+        t = s.next();
+        REQUIRE(t.to_string() == "for@(1:45)");
     }
     
     // ------------------------------ Symbols ----------------------------------
     SECTION("scanner scans symbols correctly") {
-        Scanner s("() {} ; = + - * / % == != < <= > >= && || ! :");
+        Scanner s("() {} ; = + - * / % == != < <= > >= && || ! : ,");
         t = s.next();
         REQUIRE(t.to_string() == "(@(1:1)");
         
@@ -176,7 +179,10 @@ TEST_CASE("scanner scans correctly", "[scanner]") {
         REQUIRE(t.to_string() == ":@(1:45)");
         
         t = s.next();
-        REQUIRE(t.to_string() == "eof@(1:46)");
+        REQUIRE(t.to_string() == ",@(1:47)");
+        
+        t = s.next();
+        REQUIRE(t.to_string() == "eof@(1:48)");
     }
     
     // ------------------------------ Comments ---------------------------------
