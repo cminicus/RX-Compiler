@@ -420,6 +420,9 @@ ExpressionNode * Parser::Statements() {
 
             } else {
                 current_node->next = Statement();
+                if (current_node->next != nullptr) {
+                    current_node = current_node->next;
+                }
             }
         }
         

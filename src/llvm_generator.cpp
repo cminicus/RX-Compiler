@@ -40,7 +40,7 @@ std::string LLVMGenerator::generate() {
     generate_ast();
     
     llvm::verifyModule(*module);
-    PM->run(*module);
+//    PM->run(*module);
     
 //    module->dump();
     
@@ -323,17 +323,52 @@ llvm::Value * LLVMGenerator::generate_while(WhileNode * node) {
 }
 
 llvm::Value * LLVMGenerator::generate_assign(BinaryNode * node) {
-    llvm::Value * location = generate_expression(node->left); // gauranteed to be
+    llvm::Value * location = generate_expression(node->left); // gauranteed to be a location
     llvm::Value * expression = generate_expression(node->right);
     
     if (node->right->get_expression_kind() == LOCATION_EXPRESSION) {
         expression = Builder.CreateLoad(expression);
     }
     
-    Builder.CreateStore(expression, location);
+    // if expression is a literal boolean expression (3 < 4) or a boolean literal (true), the result is a ConstantInt
+    llvm::ConstantInt * CI = nullptr;
+    if ((CI = llvm::dyn_cast<llvm::ConstantInt>(expression)) &&
+        (node->right->get_expression_kind() == BOOLEAN_LITERAL ||
+         node->right->type->get_type_kind() == BOOLEAN_TYPE)) {
+            
+            // true is -1, false is 0
+            int64_t value = CI->getSExtValue();
+            if (value == -1) value = 1; // make true be 1, not -1
+            
+            llvm::APInt boolean_value = llvm::APInt(8, value, true);
+            expression = llvm::ConstantInt::get(Context, boolean_value);
+        }
+    
+    // if the expression is a general boolean expression (x < y), the result is a CmpInst
+    // so get the value from the comparison (-1 or 0) and turn it into a new compatible type
+    if (llvm::CmpInst * comparison = llvm::dyn_cast<llvm::CmpInst>(expression)) {
+        
+        // convert comparison to true or false and store in location
+        store_comparison_in_boolean(comparison, location);
+        
+    } else {
+        Builder.CreateStore(expression, location);
+    }
     
     // create a return
     return llvm::Constant::getNullValue(llvm::Type::getInt32Ty(Context));
+    
+//    llvm::Value * location = generate_expression(node->left); // gauranteed to be
+//    llvm::Value * expression = generate_expression(node->right);
+//    
+//    if (node->right->get_expression_kind() == LOCATION_EXPRESSION) {
+//        expression = Builder.CreateLoad(expression);
+//    }
+//    
+//    Builder.CreateStore(expression, location);
+//    
+//    // create a return
+//    return llvm::Constant::getNullValue(llvm::Type::getInt32Ty(Context));
 }
 
 llvm::Value * LLVMGenerator::generate_declaration(DeclarationNode * node) {
